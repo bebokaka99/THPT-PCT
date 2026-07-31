@@ -19,7 +19,7 @@ Tài liệu này là ma trận chức năng theo vai trò. Ký hiệu:
 | Hạnh kiểm, phụ huynh, đơn học sinh | Done | 5.11-5.13 |
 | Import/export và báo cáo học vụ | Done | 5.14 |
 | Ca học, thời khóa biểu và phát hiện xung đột | Done | 5.15 |
-| Lịch kiểm tra/thi toàn trường | Planned | 5.17 |
+| Lịch kiểm tra/thi toàn trường | Done | 5.17 |
 | Dạy thay, đổi tiết, đổi phòng | Planned | 5.18 |
 | Truyền thông có xác nhận đã đọc | Planned | 5.20 |
 | Duyệt kế hoạch bài dạy theo tổ chuyên môn | Planned | 5.21 |
@@ -34,7 +34,7 @@ Tài liệu này là ma trận chức năng theo vai trò. Ký hiệu:
 | Gửi duyệt điểm, phiếu kết quả, hạnh kiểm | Done | 5.9-5.11 |
 | Xử lý đơn theo phạm vi chủ nhiệm | Done | 5.13 |
 | Lịch dạy cá nhân không trùng tiết | Done | 5.15 |
-| Lịch kiểm tra/thi theo lớp/môn | Planned | 5.17 |
+| Lịch kiểm tra/thi theo lớp/môn | Done | 5.17 |
 | Báo nghỉ, dạy thay, đổi tiết/phòng | Planned | 5.18 |
 | Nhận bài, phản hồi và chấm bài nộp | Polish | 5.19 |
 | Gửi thông báo lớp/phụ huynh có theo dõi đọc | Planned | 5.20 |
@@ -50,7 +50,7 @@ Tài liệu này là ma trận chức năng theo vai trò. Ký hiệu:
 | Hạnh kiểm, đơn/yêu cầu, hồ sơ | Done | 5.11-5.13 |
 | Thời khóa biểu lớp theo ca | Done | 5.15 |
 | Lọc điểm theo năm/học kỳ/môn và xem chi tiết môn | Done | 5.16 |
-| Lịch kiểm tra/thi và lịch học bù | Planned | 5.17 |
+| Lịch kiểm tra/thi và lịch học bù | Done | 5.17 |
 | Nộp bài và xem phản hồi giáo viên | Polish | 5.19 |
 | Thông báo bắt buộc và xác nhận đã đọc | Planned | 5.20 |
 
@@ -63,7 +63,7 @@ Tài liệu này là ma trận chức năng theo vai trò. Ký hiệu:
 | Xem điểm thành phần theo năm/học kỳ/môn | Done | 5.16 |
 | Đơn nghỉ phép | Polish | 5.13, 5.20 |
 | Lịch học published | Done | 5.15 |
-| Lịch kiểm tra | Planned | 5.17 |
+| Lịch kiểm tra | Done | 5.17 |
 | Thông báo, xác nhận đã đọc và ưu tiên khẩn | Planned | 5.20 |
 
 ## Mở rộng sau core SIS

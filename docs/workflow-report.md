@@ -1,5 +1,23 @@
 # Workflow Report
 
+## 2026-08-01 - Task 5.17 Exam Schedule & Academic Calendar
+
+- Thêm migration `037` cho lịch học vụ/audit, `038` cho cleanup audit có kiểm
+  soát và `039` cho DB guard conflict khi publish; seed quyền
+  `academic_calendar.*` và hai lịch toàn trường mẫu.
+- Backend `/api/academic-calendar` hỗ trợ list/detail, create proposal/draft,
+  update, conflict preview, publish, archive, delete draft và audit.
+- Teacher bị giới hạn theo teaching assignment; student theo enrollment;
+  guardian theo verified link; non-admin chỉ đọc lịch published đúng phạm vi.
+- Publish/update gửi notification; draft/proposal không gửi.
+- Conflict engine kiểm tra lớp, giáo viên và phòng với lịch học vụ và timetable
+  published, dùng timezone `Asia/Ho_Chi_Minh`.
+- Thêm UI lịch học vụ cho admin, teacher, student và parent, gồm list/calendar,
+  filter, print và export ICS.
+- Migration/seed PostgreSQL Docker, backend build, frontend build và smoke test
+  scope/conflict/notification/audit: pass.
+- Task tiếp theo: **5.18 - Substitute Teaching & Daily Schedule Overrides**.
+
 ## 2026-08-01 - Portal gap review and workflow expansion
 
 - Không sửa source code hoặc database trong bước này.

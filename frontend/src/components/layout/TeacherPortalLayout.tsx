@@ -25,6 +25,7 @@ const navigation = [
   { label: 'Lớp phụ trách', to: '/teacher/classes', end: false, icon: School },
   { label: 'Lớp giảng dạy', to: '/teacher/teaching-assignments', end: false, icon: BookOpenCheck },
   { label: 'Thời khóa biểu', to: '/teacher/timetable', end: false, icon: CalendarDays },
+  { label: 'Lịch kiểm tra & học vụ', to: '/teacher/academic-calendar', end: false, icon: CalendarDays },
   { label: 'Cấu hình đầu điểm', to: '/teacher/assessment-configurations', end: false, icon: Calculator },
   { label: 'Điểm danh', to: '/teacher/attendance', end: false, icon: CalendarCheck },
   { label: 'Bài tập', to: '/teacher/assignments', end: false, icon: ClipboardList },

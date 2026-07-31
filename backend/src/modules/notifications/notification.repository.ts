@@ -71,6 +71,29 @@ export async function findClassroomStudentUserIdsAtDate(
   return rows.map((row) => Number(row.id));
 }
 
+export async function findClassroomGuardianUserIdsAtDate(
+  classroomId: number,
+  effectiveDate: Date,
+) {
+  const [rows] = await databasePool.query<UserIdRow[]>(
+    `SELECT DISTINCT guardian.id
+     FROM student_enrollments enrollment
+     JOIN student_guardian_links link
+       ON link.student_user_id = enrollment.student_user_id
+      AND link.status = 'verified'
+     JOIN users guardian ON guardian.id = link.guardian_user_id
+     LEFT JOIN guardian_notification_preferences preference
+       ON preference.guardian_user_id = guardian.id
+     WHERE enrollment.classroom_id = ?
+       AND enrollment.enrolled_at <= ?::date
+       AND (enrollment.ended_at IS NULL OR enrollment.ended_at >= ?::date)
+       AND guardian.status = 'active'
+       AND COALESCE(preference.in_app_enabled, TRUE) = TRUE`,
+    [classroomId, effectiveDate, effectiveDate],
+  );
+  return rows.map((row) => Number(row.id));
+}
+
 export async function createNotificationRecord(input: CreateNotificationInput, createdByUserId: number | null, recipientUserIds: number[]) {
   const connection: DatabaseConnection = await databasePool.getConnection();
 

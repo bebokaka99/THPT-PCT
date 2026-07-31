@@ -10,6 +10,7 @@ import { requestIdMiddleware } from './middlewares/request-id.middleware.js';
 import { requestLogger } from './middlewares/request-logger.js';
 import { academicPeriodRoutes } from './modules/academic-periods/academic-period.routes.js';
 import { academicOperationRoutes } from './modules/academic-operations/academic-operation.routes.js';
+import { academicCalendarRoutes } from './modules/academic-calendar/academic-calendar.routes.js';
 import { attendanceRoutes } from './modules/attendance/attendance.routes.js';
 import { assessmentConfigurationRoutes } from './modules/assessment-configurations/assessment-configuration.routes.js';
 import { assignmentRoutes } from './modules/assignments/assignment.routes.js';
@@ -94,6 +95,7 @@ app.get('/api/health/db', async (_req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/academic-periods', academicPeriodRoutes);
 app.use('/api/academic-operations', academicOperationRoutes);
+app.use('/api/academic-calendar', academicCalendarRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/assessment-configurations', assessmentConfigurationRoutes);
 app.use('/api/assignments', assignmentRoutes);

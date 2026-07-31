@@ -22,6 +22,7 @@ const navigation = [
   { label: 'Tổng quan', to: '/student', end: true, icon: Home },
   { label: 'Lớp học', to: '/student/classes', end: false, icon: School },
   { label: 'Thời khóa biểu', to: '/student/timetable', end: false, icon: CalendarDays },
+  { label: 'Lịch kiểm tra & học vụ', to: '/student/academic-calendar', end: false, icon: CalendarDays },
   { label: 'Lịch sử lớp', to: '/student/enrollments', end: false, icon: History },
   { label: 'Chuyên cần', to: '/student/attendance', end: false, icon: CalendarCheck },
   { label: 'Bài tập', to: '/student/assignments', end: false, icon: ClipboardList },
