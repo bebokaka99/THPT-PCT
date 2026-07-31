@@ -1,5 +1,20 @@
 # Workflow Report
 
+## 2026-08-01 - Task 5.22 Digital Class Journal
+
+- Them PostgreSQL migration `046_create_class_journals.sql` va seed permission
+  `028_class_journal_permissions.sql`.
+- Backend them module `class-journals` voi options theo ngay, list/detail, create/update,
+  audit va report journal thieu/hoan thanh/draft/cancelled/substitute.
+- Teacher chi thao tac tiet ma minh la giao vien hieu luc; substitute teacher nhan ownership
+  sau daily override published; student bi tu choi truy cap journal noi bo.
+- Admin correction bat buoc ly do, hoc ky locked/closed chan sua thong thuong, audit immutable.
+- Frontend them `/teacher/class-journal` va `/admin/class-journal`.
+- Tu kiem tra: `npm run db:setup`, backend build, frontend build va
+  `tests/class-journals.smoke.ts` pass. Smoke test da phat hien va sua loi tham so
+  report CTE; khong con du lieu test sau cleanup.
+- Task tiep theo: **6.3 - CI/CD Pipeline**.
+
 ## 2026-08-01 - Task 5.21 Teaching Plans & Department Approval
 
 - Thêm migrations `044_create_teaching_plans.sql`,

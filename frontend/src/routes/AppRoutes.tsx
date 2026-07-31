@@ -322,6 +322,16 @@ const TeacherTeachingPlansPage = lazy(() =>
     default: module.TeacherTeachingPlansPage,
   })),
 );
+const TeacherClassJournalPage = lazy(() =>
+  import('../pages/teacher/TeacherClassJournalPage').then((module) => ({
+    default: module.TeacherClassJournalPage,
+  })),
+);
+const AdminClassJournalPage = lazy(() =>
+  import('../pages/admin/AdminClassJournalPage').then((module) => ({
+    default: module.AdminClassJournalPage,
+  })),
+);
 const NotificationCenterPage = lazy(() =>
   import('../pages/shared/NotificationCenterPage').then((module) => ({
     default: module.NotificationCenterPage,
@@ -589,6 +599,10 @@ export function AppRoutes() {
             element={protectedAdminPage(<AdminTeachingPlansPage />, 'teaching_plans.review')}
           />
           <Route
+            path="/admin/class-journal"
+            element={protectedAdminPage(<AdminClassJournalPage />, 'class_journals.review')}
+          />
+          <Route
             path="/teacher"
             element={protectedRolePage(<TeacherDashboardPage />, ['teacher', 'admin'])}
           />
@@ -681,6 +695,10 @@ export function AppRoutes() {
           <Route
             path="/teacher/teaching-plans"
             element={protectedRolePage(<TeacherTeachingPlansPage />, ['teacher', 'admin'])}
+          />
+          <Route
+            path="/teacher/class-journal"
+            element={protectedRolePage(<TeacherClassJournalPage />, ['teacher', 'admin'])}
           />
           <Route
             path="/student"
