@@ -175,6 +175,11 @@ const StudentAttendancePage = lazy(() =>
     default: module.StudentAttendancePage,
   })),
 );
+const StudentTimetablePage = lazy(() =>
+  import('../pages/student/StudentTimetablePage').then((module) => ({
+    default: module.StudentTimetablePage,
+  })),
+);
 const StudentAssignmentsPage = lazy(() =>
   import('../pages/student/StudentAssignmentsPage').then((module) => ({
     default: module.StudentAssignmentsPage,
@@ -218,6 +223,11 @@ const TeacherClassDetailPage = lazy(() =>
 const TeacherTeachingAssignmentsPage = lazy(() =>
   import('../pages/teacher/TeacherTeachingAssignmentsPage').then((module) => ({
     default: module.TeacherTeachingAssignmentsPage,
+  })),
+);
+const TeacherTimetablePage = lazy(() =>
+  import('../pages/teacher/TeacherTimetablePage').then((module) => ({
+    default: module.TeacherTimetablePage,
   })),
 );
 const TeacherAssessmentConfigurationsPage = lazy(() =>
@@ -525,6 +535,13 @@ export function AppRoutes() {
             ])}
           />
           <Route
+            path="/teacher/timetable"
+            element={protectedRolePage(<TeacherTimetablePage />, [
+              'teacher',
+              'admin',
+            ])}
+          />
+          <Route
             path="/teacher/assessment-configurations"
             element={protectedRolePage(
               <TeacherAssessmentConfigurationsPage />,
@@ -588,6 +605,13 @@ export function AppRoutes() {
           <Route
             path="/student/enrollments"
             element={protectedRolePage(<StudentEnrollmentHistoryPage />, [
+              'student',
+              'admin',
+            ])}
+          />
+          <Route
+            path="/student/timetable"
+            element={protectedRolePage(<StudentTimetablePage />, [
               'student',
               'admin',
             ])}

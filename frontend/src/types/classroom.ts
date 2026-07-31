@@ -84,6 +84,14 @@ export type Timetable = {
   items: TimetableItem[];
 };
 
+export type PersonalTeachingTimetableItem = TimetableItem & {
+  classroom_id: number;
+  classroom_name: string;
+  school_year: string;
+  semester: string | null;
+  timetable_title: string;
+};
+
 export type TimetableInput = {
   school_year?: string;
   semester?: string | null;

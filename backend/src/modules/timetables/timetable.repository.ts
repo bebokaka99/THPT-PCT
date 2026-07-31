@@ -1,6 +1,11 @@
 import type { DatabaseConnection, DatabaseResult, DatabaseRow } from '../../database/postgres.js';
 import { databasePool } from '../../database/postgres.js';
-import type { ResolvedTimetableInput, Timetable, TimetableItem } from './timetable.types.js';
+import type {
+  PersonalTeachingTimetableItem,
+  ResolvedTimetableInput,
+  Timetable,
+  TimetableItem,
+} from './timetable.types.js';
 
 type TimetableRow = DatabaseRow & Omit<Timetable, 'items'>;
 type TimetableItemRow = DatabaseRow & TimetableItem;
@@ -54,6 +59,44 @@ export async function findActiveTimetableByClassroomId(classroomId: number) {
     [classroomId],
   );
   return rows[0] ? findTimetableById(rows[0].id) : null;
+}
+
+export async function findPersonalTeachingTimetable(
+  teacherUserId: number,
+): Promise<PersonalTeachingTimetableItem[]> {
+  const [rows] = await databasePool.query<
+    Array<TimetableItemRow & PersonalTeachingTimetableItem>
+  >(
+    `SELECT item.*,
+      timetable.classroom_id,
+      classroom.name AS classroom_name,
+      timetable.school_year,
+      timetable.semester,
+      timetable.title AS timetable_title
+     FROM timetable_items item
+     JOIN timetables timetable ON timetable.id = item.timetable_id
+     JOIN classrooms classroom ON classroom.id = timetable.classroom_id
+     JOIN teaching_assignments assignment
+       ON assignment.id = item.teaching_assignment_id
+      AND assignment.classroom_id = timetable.classroom_id
+      AND assignment.subject_id = item.subject_id
+     WHERE assignment.teacher_user_id = ?
+       AND assignment.status = 'active'
+       AND timetable.is_active = TRUE
+       AND classroom.is_active = TRUE
+     ORDER BY item.day_of_week ASC, item.lesson_index ASC,
+       classroom.name ASC`,
+    [teacherUserId],
+  );
+
+  return rows.map((row) => ({
+    ...mapItem(row),
+    classroom_id: Number(row.classroom_id),
+    classroom_name: row.classroom_name,
+    school_year: row.school_year,
+    semester: row.semester ?? null,
+    timetable_title: row.timetable_title,
+  }));
 }
 
 export async function findTimetableById(id: number) {

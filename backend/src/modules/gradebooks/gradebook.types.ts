@@ -148,8 +148,10 @@ export type GradebookWorkflowAudit = {
 export type StudentPublishedGrade = {
   id: number;
   classroom_name: string;
+  semester_id: number;
   subject_code: string;
   subject_name: string;
+  teacher_name: string;
   semester_name: string;
   academic_year_name: string;
   status: 'approved' | 'locked';
@@ -157,6 +159,16 @@ export type StudentPublishedGrade = {
   final_score: number | null;
   approved_at: Date | null;
   locked_at: Date | null;
+  scores: Array<{
+    column_id: number;
+    category_code: string;
+    category_name: string;
+    entry_index: number;
+    label: string;
+    max_score: number;
+    state: GradeScoreState | 'unscored';
+    score: number | null;
+  }>;
 };
 
 export type StudentScoreAudit = {

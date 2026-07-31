@@ -62,7 +62,13 @@ export function validateUpdateMyProfile(body: unknown): UpdateMyProfileInput {
     phone: phoneValue(input.phone, 'phone'),
     avatar_url: avatarUrlValue(input.avatar_url),
     bio: limitedString(input.bio, 'bio', 2000),
+    parent_name: limitedString(input.parent_name, 'parent_name', 255),
     parent_phone: phoneValue(input.parent_phone, 'parent_phone'),
+    permanent_address: limitedString(
+      input.permanent_address,
+      'permanent_address',
+      1000,
+    ),
   };
 }
 
@@ -88,7 +94,13 @@ export function validateStudentProfile(body: unknown): UpsertStudentProfileInput
     class_name: limitedString(input.class_name, 'class_name', 50),
     date_of_birth: limitedString(input.date_of_birth, 'date_of_birth', 10),
     phone: phoneValue(input.phone, 'phone'),
+    parent_name: limitedString(input.parent_name, 'parent_name', 255),
     parent_phone: phoneValue(input.parent_phone, 'parent_phone'),
+    permanent_address: limitedString(
+      input.permanent_address,
+      'permanent_address',
+      1000,
+    ),
     avatar_url: avatarUrlValue(input.avatar_url),
   };
 }

@@ -12,6 +12,7 @@ import {
   createTimetableRecord,
   deleteTimetableRecord,
   findActiveTimetableByClassroomId,
+  findPersonalTeachingTimetable,
   findTimetableById,
   updateTimetableRecord,
 } from './timetable.repository.js';
@@ -23,6 +24,13 @@ function isAdmin(user: AuthUser) {
 
 function isTeacher(user: AuthUser) {
   return user.roles.includes('teacher') || isAdmin(user);
+}
+
+export async function getMyTeachingTimetable(user: AuthUser) {
+  if (!user.roles.includes('teacher') && !user.roles.includes('admin')) {
+    throw new HttpError(403, 'Teacher role is required');
+  }
+  return findPersonalTeachingTimetable(user.id);
 }
 
 async function ensureAccess(user: AuthUser, classroomId: number) {

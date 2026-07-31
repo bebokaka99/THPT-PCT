@@ -4,6 +4,7 @@ import {
   createClassroomTimetable,
   deleteClassroomTimetable,
   getClassroomTimetable,
+  getMyTeachingTimetable,
   updateClassroomTimetable,
 } from './timetable.service.js';
 import { validateId, validateTimetable } from './timetable.validation.js';
@@ -12,6 +13,18 @@ function user(req: Request) {
   if (!req.user) throw new HttpError(401, 'Authentication required');
   return req.user;
 }
+
+export const getMyTeachingTimetableController: RequestHandler = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    res.json({ data: await getMyTeachingTimetable(user(req)) });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const getClassroomTimetableController: RequestHandler = async (req, res, next) => {
   try { res.json({ data: await getClassroomTimetable(user(req), validateId(req.params.id)) }); } catch (error) { next(error); }

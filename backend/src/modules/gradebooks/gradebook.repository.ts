@@ -1015,11 +1015,31 @@ export async function findPublishedGradesForStudent(
        WHERE gradebook.id = ?`,
       [summary.id],
     );
+    const [scoreRows] = await databasePool.query<Row[]>(
+      `SELECT gradebook_column.id AS column_id,
+         gradebook_column.category_code,
+         gradebook_column.category_name,
+         gradebook_column.entry_index,
+         gradebook_column.label,
+         gradebook_column.max_score,
+         score.state,
+         score.score
+       FROM gradebook_columns gradebook_column
+       LEFT JOIN student_scores score
+         ON score.gradebook_id = gradebook_column.gradebook_id
+        AND score.column_id = gradebook_column.id
+        AND score.student_user_id = ?
+       WHERE gradebook_column.gradebook_id = ?
+       ORDER BY gradebook_column.sort_order, gradebook_column.id`,
+      [studentUserId, summary.id],
+    );
     result.push({
       id: summary.id,
       classroom_name: summary.classroom_name,
+      semester_id: summary.semester_id,
       subject_code: summary.subject_code,
       subject_name: summary.subject_name,
+      teacher_name: summary.teacher_name,
       semester_name: summary.semester_name,
       academic_year_name: summary.academic_year_name,
       status: summary.status as 'approved' | 'locked',
@@ -1027,6 +1047,16 @@ export async function findPublishedGradesForStudent(
       final_score: total?.final_score ?? null,
       approved_at: summary.approved_at,
       locked_at: summary.locked_at,
+      scores: scoreRows.map((score) => ({
+        column_id: Number(score.column_id),
+        category_code: String(score.category_code),
+        category_name: String(score.category_name),
+        entry_index: Number(score.entry_index),
+        label: String(score.label),
+        max_score: Number(score.max_score),
+        state: score.state ?? 'unscored',
+        score: score.score == null ? null : Number(score.score),
+      })),
     });
   }
   return result;

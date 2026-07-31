@@ -43,3 +43,11 @@ export type ResolvedTimetableInput = Omit<
   school_year: string;
   academic_year_id: number;
 };
+
+export type PersonalTeachingTimetableItem = TimetableItem & {
+  classroom_id: number;
+  classroom_name: string;
+  school_year: string;
+  semester: string | null;
+  timetable_title: string;
+};
