@@ -32,6 +32,7 @@ const sidebarItems = [
   { label: 'Sự kiện', to: '/admin/events' },
   { label: 'Media / Tệp tin', to: '/admin/media' },
   { label: 'Import dữ liệu', to: '/admin/importer' },
+  { label: 'Gửi thông báo', to: '/admin/communications' },
   { label: 'Tài khoản', to: '/admin/users' },
   { label: 'Lớp học', to: '/admin/classrooms' },
 ];

@@ -1,5 +1,24 @@
 # Workflow Report
 
+## 2026-08-01 - Task 5.20 Family Communication & Acknowledgements
+
+- Bổ sung PostgreSQL migration `043_family_communication_acknowledgements.sql`
+  và seed `026_family_communication_permissions.sql`.
+- Notification hỗ trợ target theo trường, role, khối, lớp hoặc danh sách user;
+  mức `normal/important/urgent`; xác nhận bắt buộc; delivered/read/acknowledged;
+  audit log và idempotent retry.
+- Teacher chỉ gửi trong lớp thuộc homeroom, teaching assignment active hoặc
+  teacher member. Student/guardian chỉ nhận bản ghi đã được gán.
+- API mới: `/api/notifications/options`,
+  `/api/notifications/me/:id/acknowledge`,
+  `/api/notifications/:id/report`; POST/list notification được mở rộng theo
+  permission `notifications.send/report`.
+- Frontend mới: `/admin/communications`, `/teacher/communications`; notification
+  center có badge urgent và nút xác nhận riêng với đánh dấu đã đọc.
+- Tự kiểm tra: backend/frontend build pass, migration/seed PostgreSQL pass,
+  smoke test scope/RBAC/read-ack/report/idempotency pass.
+- Giới hạn: chưa có email/SMS/push, lịch gửi, template hoặc export CSV.
+
 ## 2026-08-01 - Task 5.19 Homework Submission & Feedback Completion
 
 - Bổ sung migration `042_complete_assignment_submissions.sql` và seed quyền

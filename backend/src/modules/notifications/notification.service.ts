@@ -2,15 +2,22 @@ import type { AuthUser } from '../auth/auth.types.js';
 import { HttpError } from '../../utils/http-error.js';
 import type { CreateNotificationInput, ListMyNotificationsQuery, ListNotificationsQuery } from './notification.types.js';
 import {
+  acknowledgeUserNotification,
+  canTeacherSendToClassroom,
   countUnreadNotifications,
   createNotificationRecord,
   deleteNotificationRecord,
+  findActiveUserOptions,
   findClassroomStudentUserIds,
   findClassroomStudentUserIdsAtDate,
   findClassroomGuardianUserIdsAtDate,
+  findCommunicationClassroomOptions,
   findMyNotifications,
+  findNotificationReport,
   findNotifications,
   findRecipientUserIds,
+  findScopedRecipientUserIds,
+  isNotificationAuthor,
   markAllUserNotificationsRead,
   markUserNotificationRead,
 } from './notification.repository.js';
@@ -19,6 +26,18 @@ function ensureAdmin(user: AuthUser) {
   if (!user.roles.includes('admin') && !user.permissions.includes('notifications.manage')) {
     throw new HttpError(403, 'Permission denied');
   }
+}
+
+function isAdmin(user: AuthUser) {
+  return user.roles.includes('admin');
+}
+
+function canSend(user: AuthUser) {
+  return isAdmin(user) || user.permissions.includes('notifications.send') || user.permissions.includes('notifications.manage');
+}
+
+function canReport(user: AuthUser) {
+  return isAdmin(user) || user.permissions.includes('notifications.report') || user.permissions.includes('notifications.manage');
 }
 
 export async function listMyNotifications(user: AuthUser, query: ListMyNotificationsQuery) {
@@ -40,15 +59,34 @@ export function readAllMyNotifications(user: AuthUser) {
   return markAllUserNotificationsRead(user.id);
 }
 
+export async function acknowledgeMyNotification(user: AuthUser, notificationId: number) {
+  if (!(await acknowledgeUserNotification(user.id, notificationId))) {
+    throw new HttpError(404, 'Không tìm thấy thông báo cần xác nhận');
+  }
+}
+
 export async function listAdminNotifications(user: AuthUser, query: ListNotificationsQuery) {
-  ensureAdmin(user);
-  const { data, total } = await findNotifications(query);
+  if (!canReport(user)) throw new HttpError(403, 'Bạn không có quyền xem báo cáo thông báo');
+  const { data, total } = await findNotifications(query, isAdmin(user) ? undefined : user.id);
   return { data, meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) } };
 }
 
 export async function createAdminNotification(user: AuthUser, input: CreateNotificationInput) {
-  ensureAdmin(user);
-  const recipients = await findRecipientUserIds(input.target_role);
+  if (!canSend(user)) throw new HttpError(403, 'Bạn không có quyền gửi thông báo');
+  if (!isAdmin(user)) {
+    if (!user.roles.includes('teacher')) throw new HttpError(403, 'Chỉ quản trị viên hoặc giáo viên được gửi thông báo');
+    if (input.target_scope !== 'classroom' || !input.classroom_id) {
+      throw new HttpError(403, 'Giáo viên chỉ được gửi thông báo trong lớp được phân công');
+    }
+    if (!(await canTeacherSendToClassroom(user.id, input.classroom_id))) {
+      throw new HttpError(403, 'Bạn không được phân công vào lớp này');
+    }
+    if (!['all', 'student', 'guardian'].includes(input.target_role)) {
+      throw new HttpError(403, 'Giáo viên chỉ được gửi cho học sinh hoặc phụ huynh trong lớp');
+    }
+  }
+  const recipients = await findScopedRecipientUserIds(input);
+  if (recipients.length === 0) throw new HttpError(400, 'Phạm vi đã chọn không có người nhận hợp lệ');
   const notification = await createNotificationRecord(input, user.id, recipients);
   if (!notification) throw new HttpError(500, 'Failed to create notification');
   return notification;
@@ -56,7 +94,27 @@ export async function createAdminNotification(user: AuthUser, input: CreateNotif
 
 export async function deleteAdminNotification(user: AuthUser, id: number) {
   ensureAdmin(user);
-  if (!(await deleteNotificationRecord(id))) throw new HttpError(404, 'Notification not found');
+  if (!(await deleteNotificationRecord(id, user.id))) throw new HttpError(404, 'Notification not found');
+}
+
+export async function getCommunicationOptions(user: AuthUser) {
+  if (!canSend(user)) throw new HttpError(403, 'Bạn không có quyền gửi thông báo');
+  const admin = isAdmin(user);
+  const [classrooms, users] = await Promise.all([
+    findCommunicationClassroomOptions(user.id, admin),
+    admin ? findActiveUserOptions() : Promise.resolve([]),
+  ]);
+  return { classrooms, users, grades: [10, 11, 12] };
+}
+
+export async function getNotificationDeliveryReport(user: AuthUser, id: number) {
+  if (!canReport(user)) throw new HttpError(403, 'Bạn không có quyền xem báo cáo thông báo');
+  if (!isAdmin(user) && !(await isNotificationAuthor(id, user.id))) {
+    throw new HttpError(403, 'Giáo viên chỉ được xem báo cáo thông báo do mình gửi');
+  }
+  const report = await findNotificationReport(id);
+  if (!report) throw new HttpError(404, 'Không tìm thấy thông báo');
+  return report;
 }
 
 export async function createClassroomStudentNotification(input: {

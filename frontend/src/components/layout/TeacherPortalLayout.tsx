@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import {
   BadgeCheck,
+  BellRing,
   BookOpenCheck,
   Calculator,
   CalendarCheck,
@@ -34,6 +35,7 @@ const navigation = [
   { label: 'Hạnh kiểm', to: '/teacher/conduct', end: false, icon: BadgeCheck },
   { label: 'Đơn học sinh', to: '/teacher/student-requests', end: false, icon: FileSignature },
   { label: 'Hồ sơ', to: '/teacher/profile', end: false, icon: UserRound },
+  { label: 'Thông báo', to: '/teacher/communications', end: false, icon: BellRing },
 ];
 
 export function TeacherPortalLayout({ children }: { children: ReactNode }) {
