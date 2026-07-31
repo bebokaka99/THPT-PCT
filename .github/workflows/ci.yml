@@ -44,10 +44,10 @@ jobs:
       NODE_ENV: test
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -80,10 +80,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -119,7 +119,7 @@ jobs:
       release-sha: ${{ github.sha }}
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Resolve immutable image names
         id: images
@@ -128,10 +128,12 @@ jobs:
           owner="$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
           repository="$(basename "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
           prefix="ghcr.io/${owner}/${repository}"
-          echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
-          echo "backend=${prefix}-backend:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-          echo "frontend=${prefix}-frontend:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-          echo "postgres=${prefix}-postgres:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          {
+            echo "prefix=$prefix"
+            echo "backend=${prefix}-backend:${GITHUB_SHA}"
+            echo "frontend=${prefix}-frontend:${GITHUB_SHA}"
+            echo "postgres=${prefix}-postgres:${GITHUB_SHA}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build images from clean context
         shell: bash
@@ -197,7 +199,7 @@ jobs:
           EOF
 
       - name: Upload release manifest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: release-manifest-${{ github.sha }}
           path: release-manifest.json

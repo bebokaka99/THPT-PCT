@@ -57,7 +57,7 @@ jobs:
       APP_URL: ${{ vars.APP_URL }}
     steps:
       - name: Checkout release source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ env.RELEASE_SHA }}
 
@@ -123,7 +123,7 @@ jobs:
           fi
 
       - name: Checkout release source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ env.RELEASE_SHA || github.sha }}
 

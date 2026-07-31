@@ -1871,11 +1871,19 @@ Task 6.2 đã hoàn thành.
 - Local deploy A -> B, smoke và rollback B -> A: pass.
 - Docker health, restart persistence và ba image scans: pass.
 
+### External gates đã chạy
+
+- Source đã push lên `https://github.com/bebokaka99/THPT-PCT`.
+- Quality Gate #1 cho commit `0016c0b`: success.
+- Backend, frontend và immutable container images jobs đều pass.
+- Release manifest artifact đã được tạo.
+- Ba GHCR packages backend/frontend/PostgreSQL đã được publish.
+
 ### Còn chờ hạ tầng ngoài
 
-- Workspace hiện chưa có GitHub repository để bật branch protection.
-- Chưa có GHCR artifact từ workflow thực tế.
+- Chưa bật branch protection bắt buộc quality checks.
 - Chưa có self-hosted staging/production runner và GitHub Environment approval.
+- Deploy Release #1 đang queued vì chưa có runner label `staging`.
 
 Vì vậy Task 6.3 giữ trạng thái chưa hoàn thành. Source và local gates đã pass;
 chỉ chuyển sang completed sau khi chạy được các external gates nêu trong

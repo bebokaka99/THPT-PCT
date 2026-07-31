@@ -53,6 +53,9 @@ Runner cần Docker Compose v2, quyền đọc GHCR package và quyền ghi thư
 `.deploy`. Env file chứa database/JWT secrets và `POSTGRES_IMAGE` đã được phê
 duyệt. App deployment chỉ đổi backend/frontend images.
 
+Self-hosted runner phải dùng GitHub Actions Runner `2.327.1` trở lên vì các
+official actions trong workflow chạy trên Node.js 24.
+
 ## Deploy và rollback
 
 `tools/deploy-release.sh`:

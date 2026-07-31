@@ -132,7 +132,7 @@
 ---
 
 > Cập nhật lần cuối: 2026-07-31
-> Trạng thái: **Task 6.3 đã pass source/local gates; chờ GitHub external gates**
+> Trạng thái: **Task 6.3 CI/GHCR pass; chờ branch protection và deploy runners**
 >
 > Production deployment chỉ bắt đầu sau khi đã chốt rõ phạm vi Phase 5. Nếu
 > deploy sớm bản CMS/classroom hiện tại, phải ghi rõ đó chưa phải SIS hoàn chỉnh.
