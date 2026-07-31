@@ -15,6 +15,7 @@ import type {
   AssignmentListQuery,
   AssignmentStatus,
   AssignmentUpdateInput,
+  SubmissionReviewInput,
   SubmissionInput,
 } from './assignment.types.js';
 
@@ -38,6 +39,27 @@ function fileUrl(value: unknown, field: string) {
     );
   }
   return raw;
+}
+
+function optionalHttpUrl(value: unknown, field: string) {
+  if (value === undefined || value === null || value === '') return null;
+  const raw = requiredString(value, field);
+  try {
+    const url = new URL(raw);
+    if (!['http:', 'https:'].includes(url.protocol)) throw new Error();
+  } catch {
+    throw new HttpError(400, `${field} must be a valid http(s) URL`);
+  }
+  return raw;
+}
+
+function optionalScore(value: unknown, field: string) {
+  if (value === undefined || value === null || value === '') return null;
+  const score = Number(value);
+  if (!Number.isFinite(score) || score < 0 || score > 100) {
+    throw new HttpError(400, `${field} must be between 0 and 100`);
+  }
+  return score;
 }
 
 function attachmentsValue(value: unknown): AssignmentAttachmentInput[] | undefined {
@@ -93,6 +115,9 @@ export function validateAssignmentCreate(value: unknown): AssignmentInput {
     description: optionalNullableString(body.description, 'description') ?? null,
     due_at: timestampValue(body.due_at, 'due_at'),
     allow_late: flexibleBoolean(body.allow_late, 'allow_late') ?? false,
+    max_score: optionalScore(body.max_score, 'max_score'),
+    guardian_can_view_feedback:
+      flexibleBoolean(body.guardian_can_view_feedback, 'guardian_can_view_feedback') ?? true,
     attachments: attachmentsValue(body.attachments),
   };
 }
@@ -112,6 +137,13 @@ export function validateAssignmentUpdate(
   }
   if (body.allow_late !== undefined) {
     result.allow_late = flexibleBoolean(body.allow_late, 'allow_late')!;
+  }
+  if (body.max_score !== undefined) result.max_score = optionalScore(body.max_score, 'max_score');
+  if (body.guardian_can_view_feedback !== undefined) {
+    result.guardian_can_view_feedback = flexibleBoolean(
+      body.guardian_can_view_feedback,
+      'guardian_can_view_feedback',
+    )!;
   }
   result.attachments = attachmentsValue(body.attachments);
   if (Object.keys(result).length === 0) {
@@ -156,5 +188,20 @@ export function validateSubmission(value: unknown): SubmissionInput {
   const body = asRecord(value);
   return {
     note: optionalNullableString(body.note, 'note') ?? null,
+    content_text: optionalNullableString(body.content_text, 'content_text') ?? null,
+    link_url: optionalHttpUrl(body.link_url, 'link_url'),
+  };
+}
+
+export function validateSubmissionReview(value: unknown): SubmissionReviewInput {
+  const body = asRecord(value);
+  const action = requiredString(body.action, 'action');
+  if (action !== 'return' && action !== 'grade') {
+    throw new HttpError(400, 'action must be return or grade');
+  }
+  return {
+    action,
+    feedback: optionalNullableString(body.feedback, 'feedback') ?? null,
+    score: optionalScore(body.score, 'score'),
   };
 }

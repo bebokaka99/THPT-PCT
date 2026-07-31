@@ -103,13 +103,16 @@ function mapAttachment(
 
 function mapFile(row: SubmissionFileRow): AssignmentSubmissionFile {
   return {
-    ...row,
     id: Number(row.id),
     submission_id: Number(row.submission_id),
     media_file_id:
       row.media_file_id === null ? null : Number(row.media_file_id),
+    file_url: String(row.file_url),
+    original_name: String(row.original_name),
+    mime_type: String(row.mime_type),
     size: Number(row.size),
     version: Number(row.version),
+    is_active: Boolean(row.is_active),
     uploaded_at: iso(row.uploaded_at),
     replaced_at: nullableIso(row.replaced_at),
   };
@@ -121,12 +124,25 @@ function mapSubmission(row: SubmissionRow): AssignmentSubmission {
       ? mapFile(row.current_file as SubmissionFileRow)
       : null;
   return {
-    ...row,
     id: Number(row.id),
     assignment_id: Number(row.assignment_id),
     student_user_id: Number(row.student_user_id),
+    student_name: String(row.student_name ?? ''),
+    student_code: row.student_code ?? null,
+    status: row.status,
     first_submitted_at: iso(row.first_submitted_at),
     last_submitted_at: iso(row.last_submitted_at),
+    note: row.note ?? null,
+    content_text: row.content_text ?? null,
+    link_url: row.link_url ?? null,
+    feedback: row.feedback ?? null,
+    score: row.score === null || row.score === undefined ? null : Number(row.score),
+    returned_at: nullableIso(row.returned_at),
+    graded_at: nullableIso(row.graded_at),
+    reviewed_by_user_id:
+      row.reviewed_by_user_id === null || row.reviewed_by_user_id === undefined
+        ? null
+        : Number(row.reviewed_by_user_id),
     current_file: currentFile,
   };
 }
@@ -335,8 +351,9 @@ export async function insertAssignment(
     const [result] = await connection.query<DatabaseResult>(
       `INSERT INTO assignments (
         classroom_id, subject_id, semester_id, teaching_assignment_id,
-        title, description, due_at, allow_late, created_by_user_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+        title, description, due_at, allow_late, max_score,
+        guardian_can_view_feedback, created_by_user_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [
         scope.classroom_id,
         scope.subject_id,
@@ -346,6 +363,8 @@ export async function insertAssignment(
         input.description ?? null,
         input.due_at,
         input.allow_late,
+        input.max_score ?? null,
+        input.guardian_can_view_feedback ?? true,
         userId,
       ],
     );
@@ -368,6 +387,8 @@ export async function updateAssignmentRecord(
     description: string | null;
     due_at: string;
     allow_late: boolean;
+    max_score: number | null;
+    guardian_can_view_feedback: boolean;
     attachments?: AssignmentAttachmentInput[];
   },
 ) {
@@ -376,9 +397,11 @@ export async function updateAssignmentRecord(
     await connection.beginTransaction();
     await connection.query(
       `UPDATE assignments
-       SET title = ?, description = ?, due_at = ?, allow_late = ?
+       SET title = ?, description = ?, due_at = ?, allow_late = ?,
+           max_score = ?, guardian_can_view_feedback = ?
        WHERE id = ?`,
-      [input.title, input.description, input.due_at, input.allow_late, id],
+      [input.title, input.description, input.due_at, input.allow_late,
+        input.max_score, input.guardian_can_view_feedback, id],
     );
     if (input.attachments) {
       await replaceAttachments(connection, id, input.attachments);
@@ -503,13 +526,16 @@ export async function findAssignmentSubmissions(assignmentId: number) {
 export async function saveStudentSubmission(
   assignmentId: number,
   studentUserId: number,
-  note: string | null,
-  media: {
-    id: number;
-    url: string;
-    original_name: string;
-    mime_type: string;
-    size: number;
+  input: {
+    note: string | null;
+    content_text: string | null;
+    link_url: string | null;
+    file: {
+      storage_path: string;
+      original_name: string;
+      mime_type: string;
+      size: number;
+    } | null;
   },
 ) {
   const connection = await databasePool.getConnection();
@@ -530,7 +556,7 @@ export async function saveStudentSubmission(
       [assignmentId],
     );
     const assignment = assignmentRows[0];
-    if (!assignment || assignment.status !== 'published') {
+    if (!assignment || !['published', 'closed'].includes(assignment.status)) {
       throw new Error('ASSIGNMENT_NOT_OPEN');
     }
     const [accessRows] = await connection.query<ExistsRow[]>(
@@ -572,50 +598,53 @@ export async function saveStudentSubmission(
         [submissionId],
       );
       oldFileId = oldFiles[0] ? Number(oldFiles[0].id) : null;
-      await connection.query(
-        `UPDATE assignment_submission_files
-         SET is_active = FALSE, replaced_at = NOW()
-         WHERE submission_id = ? AND is_active = TRUE`,
-        [submissionId],
-      );
+      if (input.file) {
+        await connection.query(
+          `UPDATE assignment_submission_files SET is_active = FALSE, replaced_at = NOW()
+           WHERE submission_id = ? AND is_active = TRUE`,
+          [submissionId],
+        );
+      }
       await connection.query(
         `UPDATE assignment_submissions SET status = ?, note = ?,
+          content_text = ?, link_url = ?, feedback = NULL, score = NULL,
+          returned_at = NULL, graded_at = NULL, reviewed_by_user_id = NULL,
           last_submitted_at = NOW(), withdrawn_at = NULL
          WHERE id = ?`,
-        [status, note, submissionId],
+        [status, input.note, input.content_text, input.link_url, submissionId],
       );
     } else {
       const [result] = await connection.query<DatabaseResult>(
         `INSERT INTO assignment_submissions (
-          assignment_id, student_user_id, status, note
-        ) VALUES (?, ?, ?, ?) RETURNING id`,
-        [assignmentId, studentUserId, status, note],
+          assignment_id, student_user_id, status, note, content_text, link_url
+        ) VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
+        [assignmentId, studentUserId, status, input.note, input.content_text, input.link_url],
       );
       submissionId = result.insertId;
     }
-    const [versionRows] = await connection.query<
-      Array<DatabaseRow & { version: number }>
-    >(
-      `SELECT COALESCE(MAX(version), 0) + 1 AS version
-       FROM assignment_submission_files WHERE submission_id = ?`,
-      [submissionId],
-    );
-    const version = Number(versionRows[0]?.version ?? 1);
-    const [fileResult] = await connection.query<DatabaseResult>(
-      `INSERT INTO assignment_submission_files (
-        submission_id, media_file_id, file_url, original_name, mime_type,
-        size, version, is_active
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE) RETURNING id`,
-      [
-        submissionId,
-        media.id,
-        media.url,
-        media.original_name,
-        media.mime_type,
-        media.size,
-        version,
-      ],
-    );
+    if (!input.file && !existing && !input.content_text && !input.link_url) {
+      throw new Error('ASSIGNMENT_CONTENT_REQUIRED');
+    }
+    let newFileId: number | null = null;
+    if (input.file) {
+      const [versionRows] = await connection.query<Array<DatabaseRow & { version: number }>>(
+        `SELECT COALESCE(MAX(version), 0) + 1 AS version FROM assignment_submission_files WHERE submission_id = ?`,
+        [submissionId],
+      );
+      const version = Number(versionRows[0]?.version ?? 1);
+      const [fileResult] = await connection.query<DatabaseResult>(
+        `INSERT INTO assignment_submission_files (
+          submission_id, file_url, storage_path, original_name, mime_type, size, version, is_active
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE) RETURNING id`,
+        [submissionId, '/api/assignments/pending', input.file.storage_path,
+          input.file.original_name, input.file.mime_type, input.file.size, version],
+      );
+      newFileId = fileResult.insertId;
+      await connection.query(
+        `UPDATE assignment_submission_files SET file_url = ? WHERE id = ?`,
+        [`/api/assignments/${assignmentId}/submissions/${submissionId}/files/${newFileId}/download`, newFileId],
+      );
+    }
     await connection.query(
       `INSERT INTO assignment_submission_audits (
         submission_id, actor_user_id, action, old_status, new_status,
@@ -624,12 +653,12 @@ export async function saveStudentSubmission(
       [
         submissionId,
         studentUserId,
-        existing ? 'replace' : 'submit',
+        input.file && existing ? 'replace' : 'submit',
         existing?.status ?? null,
         status,
         oldFileId,
-        fileResult.insertId,
-        note,
+        newFileId,
+        input.note,
       ],
     );
     await connection.commit();
@@ -640,4 +669,137 @@ export async function saveStudentSubmission(
     connection.release();
   }
   return findStudentSubmission(assignmentId, studentUserId, true);
+}
+
+export async function findAssignmentRoster(assignmentId: number) {
+  const [rows] = await databasePool.query<SubmissionRow[]>(
+    `SELECT assignment.id AS assignment_id, submission.id,
+       enrollment.student_user_id, student.full_name AS student_name,
+       profile.student_code, submission.status, submission.note,
+       submission.first_submitted_at, submission.last_submitted_at,
+       submission.content_text, submission.link_url, submission.feedback,
+       submission.score, submission.returned_at, submission.graded_at,
+       submission.reviewed_by_user_id, ${currentFileExpression}
+     FROM assignments assignment
+     JOIN student_enrollments enrollment
+       ON enrollment.classroom_id = assignment.classroom_id
+      AND enrollment.enrolled_at <= COALESCE(assignment.published_at::DATE, CURRENT_DATE)
+      AND (enrollment.ended_at IS NULL OR enrollment.ended_at >= COALESCE(assignment.published_at::DATE, CURRENT_DATE))
+     JOIN users student ON student.id = enrollment.student_user_id
+     LEFT JOIN student_profiles profile ON profile.user_id = student.id
+     LEFT JOIN assignment_submissions submission
+       ON submission.assignment_id = assignment.id
+      AND submission.student_user_id = enrollment.student_user_id
+     WHERE assignment.id = ?
+     ORDER BY student.full_name, enrollment.student_user_id`,
+    [assignmentId],
+  );
+  return rows.map((row) => ({
+    ...mapSubmission({
+      ...row,
+      id: row.id ?? 0,
+      assignment_id: assignmentId,
+      status: row.status ?? 'not_started',
+      first_submitted_at: row.first_submitted_at ?? new Date(0),
+      last_submitted_at: row.last_submitted_at ?? new Date(0),
+    } as SubmissionRow),
+    id: row.id === null || row.id === undefined ? null : Number(row.id),
+    first_submitted_at: row.first_submitted_at ? iso(row.first_submitted_at) : null,
+    last_submitted_at: row.last_submitted_at ? iso(row.last_submitted_at) : null,
+    status: row.status ?? 'not_started',
+  }));
+}
+
+export async function reviewAssignmentSubmission(
+  assignmentId: number,
+  submissionId: number,
+  reviewerId: number,
+  input: { action: 'return' | 'grade'; feedback: string | null; score: number | null },
+) {
+  const connection = await databasePool.getConnection();
+  let studentUserId = 0;
+  try {
+    await connection.beginTransaction();
+    const [rows] = await connection.query<Array<DatabaseRow & {
+      status: AssignmentSubmissionStatus;
+      student_user_id: number;
+      max_score: number | null;
+    }>>(
+      `SELECT submission.status, submission.student_user_id, assignment.max_score
+       FROM assignment_submissions submission
+       JOIN assignments assignment ON assignment.id = submission.assignment_id
+       WHERE submission.id = ? AND submission.assignment_id = ? FOR UPDATE`,
+      [submissionId, assignmentId],
+    );
+    const row = rows[0];
+    if (!row) throw new Error('ASSIGNMENT_SUBMISSION_NOT_FOUND');
+    studentUserId = Number(row.student_user_id);
+    if (input.action === 'grade' && (row.max_score === null || input.score === null)) {
+      throw new Error('ASSIGNMENT_SCORE_REQUIRED');
+    }
+    if (input.action === 'grade' && input.score! > Number(row.max_score)) {
+      throw new Error('ASSIGNMENT_SCORE_EXCEEDS_MAX');
+    }
+    const newStatus: AssignmentSubmissionStatus = input.action === 'grade' ? 'graded' : 'returned';
+    await connection.query(
+      `UPDATE assignment_submissions SET status = ?, feedback = ?, score = ?,
+        returned_at = CASE WHEN ? = 'return' THEN NOW() ELSE NULL END,
+        graded_at = CASE WHEN ? = 'grade' THEN NOW() ELSE NULL END,
+        reviewed_by_user_id = ? WHERE id = ?`,
+      [newStatus, input.feedback, input.action === 'grade' ? input.score : null,
+        input.action, input.action, reviewerId, submissionId],
+    );
+    const [fileRows] = await connection.query<Array<DatabaseRow & { id: number }>>(
+      `SELECT id FROM assignment_submission_files WHERE submission_id = ? AND is_active = TRUE LIMIT 1`,
+      [submissionId],
+    );
+    await connection.query(
+      `INSERT INTO assignment_submission_audits (
+        submission_id, actor_user_id, action, old_status, new_status, new_file_id, note
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [submissionId, reviewerId, input.action, row.status, newStatus,
+        fileRows[0]?.id ?? null, input.feedback],
+    );
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+  return { studentUserId, submission: await findSubmissionById(assignmentId, submissionId) };
+}
+
+export async function findSubmissionById(assignmentId: number, submissionId: number) {
+  const [rows] = await databasePool.query<SubmissionRow[]>(
+    `SELECT submission.*, student.full_name AS student_name,
+       profile.student_code, ${currentFileExpression}
+     FROM assignment_submissions submission
+     JOIN users student ON student.id = submission.student_user_id
+     LEFT JOIN student_profiles profile ON profile.user_id = student.id
+     WHERE submission.assignment_id = ? AND submission.id = ? LIMIT 1`,
+    [assignmentId, submissionId],
+  );
+  return rows[0] ? mapSubmission(rows[0]) : null;
+}
+
+export async function findSubmissionFile(assignmentId: number, submissionId: number, fileId: number) {
+  const [rows] = await databasePool.query<Array<DatabaseRow & {
+    storage_path: string | null;
+    original_name: string;
+    mime_type: string;
+    student_user_id: number;
+    teacher_user_id: number;
+    created_by_user_id: number | null;
+  }>>(
+    `SELECT file.storage_path, file.original_name, file.mime_type,
+       submission.student_user_id, teaching.teacher_user_id, assignment.created_by_user_id
+     FROM assignment_submission_files file
+     JOIN assignment_submissions submission ON submission.id = file.submission_id
+     JOIN assignments assignment ON assignment.id = submission.assignment_id
+     JOIN teaching_assignments teaching ON teaching.id = assignment.teaching_assignment_id
+     WHERE file.id = ? AND file.submission_id = ? AND submission.assignment_id = ? LIMIT 1`,
+    [fileId, submissionId, assignmentId],
+  );
+  return rows[0] ?? null;
 }

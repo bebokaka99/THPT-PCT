@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Bell,
   ChevronRight,
+  ClipboardList,
   FileText,
   Megaphone,
   School,
@@ -15,6 +16,7 @@ import {
   getClassrooms,
 } from '../../services/classroom.service';
 import { getUnreadNotificationCount } from '../../services/notification.service';
+import { getAssignments } from '../../services/assignment.service';
 import { getMyProfile } from '../../services/profile.service';
 import { useAuth } from '../../stores/auth-context';
 import type {
@@ -43,10 +45,11 @@ function formatDate(value?: string | null) {
 }
 
 async function loadDashboard(token: string, userId: number) {
-  const [classroomResponse, profile, unread] = await Promise.all([
+  const [classroomResponse, profile, unread, assignments] = await Promise.all([
     getClassrooms(token, { page: 1, limit: 50 }),
     getMyProfile(token),
     getUnreadNotificationCount(token).catch(() => ({ count: 0 })),
+    getAssignments(token, { page: 1, limit: 100 }).catch(() => ({ data: [] })),
   ]);
   const classroomContents = await Promise.all(
     classroomResponse.data.map(async (classroom) => {
@@ -79,6 +82,7 @@ async function loadDashboard(token: string, userId: number) {
     posts,
     profile,
     unreadCount: unread.count,
+    assignments: assignments.data,
   };
 }
 
@@ -229,7 +233,7 @@ export function TeacherDashboardPage() {
 
       {data && (
         <>
-          <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <StatCard
               icon={School}
               label="Lớp phụ trách"
@@ -256,6 +260,12 @@ export function TeacherDashboardPage() {
               label="Thông báo chưa đọc"
               value={data.unreadCount}
               accent="bg-violet-50 text-violet-700"
+            />
+            <StatCard
+              icon={ClipboardList}
+              label="Bai tap dang quan ly"
+              value={data.assignments.length}
+              accent="bg-cyan-50 text-cyan-700"
             />
           </section>
 

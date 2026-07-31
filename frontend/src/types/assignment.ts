@@ -1,5 +1,11 @@
 export type AssignmentStatus = 'draft' | 'published' | 'closed';
-export type AssignmentSubmissionStatus = 'submitted' | 'late' | 'withdrawn';
+export type AssignmentSubmissionStatus =
+  | 'not_started'
+  | 'submitted'
+  | 'late'
+  | 'returned'
+  | 'graded'
+  | 'withdrawn';
 
 export type AssignmentAttachment = {
   id?: number;
@@ -24,6 +30,7 @@ export type AssignmentSubmissionFile = {
   is_active: boolean;
   uploaded_at: string;
   replaced_at: string | null;
+  storage_path?: string | null;
 };
 
 export type AssignmentSubmission = {
@@ -37,7 +44,20 @@ export type AssignmentSubmission = {
   first_submitted_at: string;
   last_submitted_at: string;
   current_file: AssignmentSubmissionFile | null;
+  content_text: string | null;
+  link_url: string | null;
+  feedback: string | null;
+  score: number | null;
+  returned_at: string | null;
+  graded_at: string | null;
+  reviewed_by_user_id: number | null;
   files?: AssignmentSubmissionFile[];
+};
+
+export type AssignmentRosterItem = Omit<AssignmentSubmission, 'id' | 'first_submitted_at' | 'last_submitted_at'> & {
+  id: number | null;
+  first_submitted_at: string | null;
+  last_submitted_at: string | null;
 };
 
 export type Assignment = {
@@ -63,6 +83,8 @@ export type Assignment = {
   updated_at: string;
   submission_count: number;
   student_count: number;
+  max_score: number | null;
+  guardian_can_view_feedback: boolean;
   my_submission_status?: AssignmentSubmissionStatus | null;
 };
 
@@ -77,12 +99,20 @@ export type AssignmentInput = {
   description?: string | null;
   due_at: string;
   allow_late: boolean;
+  max_score?: number | null;
+  guardian_can_view_feedback?: boolean;
   attachments?: AssignmentAttachment[];
 };
 
 export type AssignmentUpdateInput = Partial<
-  Pick<AssignmentInput, 'title' | 'description' | 'due_at' | 'allow_late' | 'attachments'>
+  Pick<AssignmentInput, 'title' | 'description' | 'due_at' | 'allow_late' | 'max_score' | 'guardian_can_view_feedback' | 'attachments'>
 >;
+
+export type SubmissionReviewInput = {
+  action: 'return' | 'grade';
+  feedback?: string | null;
+  score?: number | null;
+};
 
 export type AssignmentListQuery = {
   page?: number;

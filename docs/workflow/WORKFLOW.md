@@ -90,7 +90,7 @@
 - [x] [5.16 — Student Grade Subject Exploration](phase-5-academic-operations/5.16-student-grade-subject-exploration.md) **P0**
 - [x] [5.17 — Exam Schedule & Academic Calendar](phase-5-academic-operations/5.17-exam-schedule-academic-calendar.md)
 - [x] [5.18 — Substitute Teaching & Daily Schedule Overrides](phase-5-academic-operations/5.18-substitution-daily-schedule-overrides.md)
-- [ ] [5.19 — Homework Submission & Feedback Completion](phase-5-academic-operations/5.19-homework-submission-feedback-completion.md)
+- [x] [5.19 — Homework Submission & Feedback Completion](phase-5-academic-operations/5.19-homework-submission-feedback-completion.md)
 - [ ] [5.20 — Family Communication & Acknowledgements](phase-5-academic-operations/5.20-family-communication-acknowledgements.md)
 - [ ] [5.21 — Teaching Plans & Department Approval](phase-5-academic-operations/5.21-teaching-plans-department-approval.md)
 - [ ] [5.22 — Digital Class Journal](phase-5-academic-operations/5.22-digital-class-journal.md)
@@ -167,7 +167,7 @@
 ---
 
 > Cập nhật lần cuối: 2026-08-01
-> Trạng thái: **Task tiếp theo là 5.19. Task 6.3 chờ
+> Trạng thái: **Task tiếp theo là 5.20. Task 6.3 chờ
 > deploy runners; Task 6.4 source/local gates pass, chờ environment secret thật.**
 >
 > Không gọi bản hiện tại là SIS production-ready trước khi các workflow Phase 5

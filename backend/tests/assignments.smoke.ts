@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
 import { app } from '../src/app.js';
 import { closeDatabasePool, postgresPool } from '../src/database/postgres.js';
-import { deleteMedia } from '../src/modules/media/media.service.js';
 import { hashPassword } from '../src/utils/password.js';
 
 type LoginResponse = { accessToken: string };
@@ -41,7 +40,6 @@ async function run() {
   const suffix = Date.now();
   const password = 'assignment-smoke-password';
   const userIds: number[] = [];
-  const mediaIds: number[] = [];
   let classroomId = 0;
   let subjectId = 0;
   let curriculumId = 0;
@@ -171,9 +169,10 @@ async function run() {
       body: JSON.stringify({
         teaching_assignment_id: teachingAssignmentId,
         title: 'Assignment smoke',
-        description: 'Submit a PDF file',
+        description: 'Submit text, link, or a PDF file',
         due_at: dueAt,
         allow_late: true,
+        max_score: 10,
       }),
     });
     assert.equal(createResponse.status, 201);
@@ -220,6 +219,16 @@ async function run() {
     );
     assert.equal(foreignDetail.status, 403);
 
+    const textSubmission = new FormData();
+    textSubmission.append('content_text', 'Bài làm dạng text trong smoke test');
+    textSubmission.append('note', 'Text only');
+    const textResponse = await fetch(
+      `${baseUrl}/assignments/${assignment.id}/submissions`,
+      { method: 'POST', headers: { Authorization: `Bearer ${student.accessToken}` }, body: textSubmission },
+    );
+    assert.equal(textResponse.status, 201);
+    assert.equal(((await textResponse.json()) as DataResponse<{ content_text: string }>).data.content_text, 'Bài làm dạng text trong smoke test');
+
     for (const version of [1, 2]) {
       const form = new FormData();
       form.append(
@@ -245,7 +254,6 @@ async function run() {
           files: Array<{ is_active: boolean }>;
         }>
       ).data;
-      mediaIds.push(Number(submission.current_file.media_file_id));
       assert.equal(submission.current_file.version, version);
       assert.equal(
         submission.files.filter((file) => file.is_active).length,
@@ -258,14 +266,31 @@ async function run() {
       { headers: jsonHeaders(teacher.accessToken) },
     );
     assert.equal(teacherSubmissions.status, 200);
-    assert.equal(
-      (
-        (await teacherSubmissions.json()) as DataResponse<
-          Array<{ student_user_id: number }>
-        >
-      ).data[0].student_user_id,
-      studentId,
+    const roster = (
+      (await teacherSubmissions.json()) as DataResponse<Array<{
+        id: number;
+        student_user_id: number;
+        current_file: { id: number } | null;
+      }>>
+    ).data;
+    const submittedRow = roster.find((row) => row.student_user_id === studentId);
+    assert.equal(submittedRow?.student_user_id, studentId);
+    assert.ok(submittedRow?.current_file?.id, 'private file metadata is present');
+    const privateDownload = await fetch(
+      `${baseUrl}/assignments/${assignment.id}/submissions/${submittedRow!.id}/files/${submittedRow!.current_file!.id}/download`,
+      { headers: { Authorization: `Bearer ${student.accessToken}` } },
     );
+    assert.equal(privateDownload.status, 200);
+
+    const reviewResponse = await fetch(
+      `${baseUrl}/assignments/${assignment.id}/submissions/${(await postgresPool.query<{ id: number }>('SELECT id FROM assignment_submissions WHERE assignment_id = $1 AND student_user_id = $2', [assignment.id, studentId])).rows[0].id}/review`,
+      {
+        method: 'PATCH',
+        headers: jsonHeaders(teacher.accessToken),
+        body: JSON.stringify({ action: 'grade', feedback: 'Tốt', score: 9 }),
+      },
+    );
+    assert.equal(reviewResponse.status, 200);
 
     const closed = await fetch(
       `${baseUrl}/assignments/${assignment.id}/close`,
@@ -322,7 +347,7 @@ async function run() {
     );
     assert.equal(
       Number(audit.rows.find((row) => row.action === 'replace')?.total),
-      1,
+      2,
     );
 
     console.log(
@@ -354,9 +379,6 @@ async function run() {
         'DELETE FROM assignments WHERE id = ANY($1::bigint[])',
         [assignmentIds],
       );
-    }
-    for (const mediaId of mediaIds) {
-      await deleteMedia(mediaId).catch(() => undefined);
     }
     if (teachingAssignmentId) {
       await postgresPool.query(

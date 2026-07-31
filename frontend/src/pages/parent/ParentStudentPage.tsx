@@ -8,6 +8,7 @@ import { TimetablePrintView } from '../../components/classrooms/TimetablePrintVi
 import { ParentPortalLayout } from '../../components/layout/ParentPortalLayout';
 import { getGuardianStudentSummary } from '../../services/guardian.service';
 import { getGuardianStudentGrades } from '../../services/gradebook.service';
+import { getGuardianAssignments } from '../../services/assignment.service';
 import { useAuth } from '../../stores/auth-context';
 
 const statusLabels = {
@@ -48,6 +49,12 @@ export function ParentStudentPage() {
       semester_id: semesterId,
       subject_id: subjectId,
     }),
+    enabled: Boolean(accessToken && Number.isInteger(studentId) && studentId > 0),
+    retry: false,
+  });
+  const assignments = useQuery({
+    queryKey: ['guardian', 'assignments', studentId],
+    queryFn: () => getGuardianAssignments(accessToken!, studentId, { page: 1, limit: 20 }),
     enabled: Boolean(accessToken && Number.isInteger(studentId) && studentId > 0),
     retry: false,
   });
@@ -127,6 +134,28 @@ export function ParentStudentPage() {
           </div>
         ) : summary.data?.data ? (
           <>
+            <section className="border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="font-bold text-slate-950">Bài tập của học sinh</h2>
+              {assignments.isLoading ? (
+                <p className="mt-3 text-sm text-slate-500">Đang tải...</p>
+              ) : assignments.isError ? (
+                <p className="mt-3 text-sm text-slate-500">Chưa có dữ liệu bài tập.</p>
+              ) : assignments.data?.data.length ? (
+                <div className="mt-3 divide-y divide-slate-100">
+                  {assignments.data.data.slice(0, 5).map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                      <span className="font-semibold text-slate-800">{item.title}</span>
+                      <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
+                        {item.my_submission_status === 'graded' ? 'Đã chấm' : item.my_submission_status === 'returned' ? 'Cần cập nhật' : item.my_submission_status ? 'Đã nộp' : 'Chưa nộp'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-slate-500">Chưa có bài tập được giao.</p>
+              )}
+            </section>
+
             <section className="grid grid-cols-2 gap-3 sm:grid-cols-5">
               {[
                 ['Tổng buổi', summary.data.data.attendance.summary.total],

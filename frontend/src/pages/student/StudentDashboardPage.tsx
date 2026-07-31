@@ -4,6 +4,7 @@ import {
   BookOpen,
   CalendarDays,
   ChevronRight,
+  ClipboardList,
   FileText,
   School,
 } from 'lucide-react';
@@ -16,6 +17,7 @@ import {
   getClassroomTimetable,
 } from '../../services/classroom.service';
 import { getUnreadNotificationCount } from '../../services/notification.service';
+import { getAssignments } from '../../services/assignment.service';
 import { getMyProfile } from '../../services/profile.service';
 import { useAuth } from '../../stores/auth-context';
 import type {
@@ -55,10 +57,11 @@ function isStudentProfile(value: MyProfile['profile']): value is StudentProfile 
 }
 
 async function loadDashboard(token: string) {
-  const [classroomResponse, profile, unread] = await Promise.all([
+  const [classroomResponse, profile, unread, assignments] = await Promise.all([
     getClassrooms(token, { page: 1, limit: 20 }),
     getMyProfile(token),
     getUnreadNotificationCount(token).catch(() => ({ count: 0 })),
+    getAssignments(token, { page: 1, limit: 100 }).catch(() => ({ data: [] })),
   ]);
 
   const classData: DashboardClass[] = await Promise.all(
@@ -95,6 +98,7 @@ async function loadDashboard(token: string) {
     posts,
     profile,
     unreadCount: unread.count,
+    assignments: assignments.data,
   };
 }
 
@@ -294,7 +298,7 @@ export function StudentDashboardPage() {
 
       {data && (
         <>
-          <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <StatCard icon={School} label="Lớp đang tham gia" value={data.classrooms.length} />
             <StatCard icon={Bell} label="Thông báo lớp" value={data.posts.length} />
             <StatCard icon={BookOpen} label="Tài liệu lớp" value={data.documents.length} />

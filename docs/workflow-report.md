@@ -1,5 +1,20 @@
 # Workflow Report
 
+## 2026-08-01 - Task 5.19 Homework Submission & Feedback Completion
+
+- Bổ sung migration `042_complete_assignment_submissions.sql` và seed quyền
+  `assignments.read` cho guardian.
+- Học sinh có thể nộp text/link/file; trạng thái gồm submitted, late, returned,
+  graded. Giáo viên xem roster đầy đủ, trả bài, phản hồi và chấm điểm theo
+  `max_score`.
+- File submission lưu ở `backend/private-uploads/assignments`, không serve static;
+  download phải đi qua endpoint có Bearer token và kiểm tra student/teacher/admin.
+- Thêm API review, private download và guardian assignment summary. Frontend student
+  có nội dung/link tùy chọn; teacher có review controls; parent hiển thị summary.
+- Build backend/frontend, migration/seed PostgreSQL và `npm run test:assignments`: pass.
+- Giới hạn: mỗi submission có một file active; chưa có rubric, email và guardian
+  workflow chi tiết. Task tiếp theo: **5.20 - Family Communication & Acknowledgements**.
+
 ## 2026-08-01 - Task 5.18 Substitute Teaching & Daily Schedule Overrides
 
 - Thêm PostgreSQL migrations `040_create_daily_schedule_overrides.sql` và
