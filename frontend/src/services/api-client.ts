@@ -1,6 +1,6 @@
-const apiBaseUrl = (
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api'
-).replace(/\/+$/, '');
+import { publicEnv } from '../config/public-env';
+
+const apiBaseUrl = publicEnv.apiBaseUrl;
 const apiErrorEvent = 'thpt-pct-pt:api-error';
 export const AUTH_TOKEN_REFRESHED_EVENT = 'thpt-pct-pt:auth-token-refreshed';
 export const AUTH_SESSION_EXPIRED_EVENT = 'thpt-pct-pt:auth-session-expired';

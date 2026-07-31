@@ -1,13 +1,15 @@
 import type { MediaFile, MediaVariant } from '../types/media';
+import { publicEnv } from '../config/public-env';
 
 export function resolvePublicMediaUrl(value?: string | null) {
   if (!value) return '';
   if (value.startsWith('http://') || value.startsWith('https://')) return value;
 
   try {
-    const apiBase =
-      import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
-    const apiOrigin = new URL(apiBase, window.location.origin).origin;
+    const apiOrigin = new URL(
+      publicEnv.apiBaseUrl,
+      window.location.origin,
+    ).origin;
     return new URL(value, apiOrigin).toString();
   } catch {
     return value;

@@ -7,6 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "config:check": "tsx src/config/check-env.ts",
     "db:migrate": "tsx src/database/migrate.ts schema",
     "db:seed": "tsx src/database/migrate.ts seeds",
     "db:setup": "tsx src/database/migrate.ts all",
@@ -30,10 +31,11 @@
     "test:student-requests": "tsx tests/student-requests.smoke.ts",
     "test:academic-operations": "tsx tests/academic-operations.smoke.ts",
     "test:security-privacy": "tsx tests/security-privacy.smoke.ts",
+    "test:secret-scan": "node ../tools/check-secret-leaks.mjs",
     "test:validators": "tsx tests/common-validators.unit.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "quality": "npm run build && npm test && npm run test:validators && npm run test:env-security && npm run test:schema && npm run test:auth-refresh && npm run test:optional-auth && npm run test:teacher-rbac && npm run test:academic-periods && npm run test:subjects && npm run test:enrollments && npm run test:teaching-assignments && npm run test:assessment-configurations && npm run test:attendance && npm run test:assignments && npm run test:gradebooks && npm run test:conduct && npm run test:guardians && npm run test:student-requests && npm run test:academic-operations && npm run test:security-privacy && npm run test:smoke"
+    "quality": "npm run build && npm test && npm run test:validators && npm run test:env-security && npm run test:secret-scan && npm run test:schema && npm run test:auth-refresh && npm run test:optional-auth && npm run test:teacher-rbac && npm run test:academic-periods && npm run test:subjects && npm run test:enrollments && npm run test:teaching-assignments && npm run test:assessment-configurations && npm run test:attendance && npm run test:assignments && npm run test:gradebooks && npm run test:conduct && npm run test:guardians && npm run test:student-requests && npm run test:academic-operations && npm run test:security-privacy && npm run test:smoke"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

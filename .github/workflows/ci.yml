@@ -57,6 +57,9 @@ jobs:
         run: npm ci
         working-directory: backend
 
+      - name: Scan tracked source for high-confidence secrets
+        run: node tools/check-secret-leaks.mjs
+
       - name: Audit backend production dependencies
         run: npm audit --omit=dev --audit-level=high
         working-directory: backend
@@ -103,6 +106,10 @@ jobs:
         env:
           VITE_API_BASE_URL: /api
           VITE_PUBLIC_SITE_URL: http://localhost:8080
+
+      - name: Verify frontend bundle contains no backend secret markers
+        run: node ../tools/check-secret-leaks.mjs --frontend-dist dist
+        working-directory: frontend
 
   container-images:
     name: Immutable container images
@@ -167,6 +174,23 @@ jobs:
               --exit-code 1 \
               --quiet \
               "$image"
+          done
+
+      - name: Verify final image metadata contains no runtime secrets
+        shell: bash
+        run: |
+          for image in \
+            "${{ steps.images.outputs.backend }}" \
+            "${{ steps.images.outputs.frontend }}" \
+            "${{ steps.images.outputs.postgres }}"
+          do
+            metadata="$(docker inspect --format '{{json .Config.Env}}' "$image")"
+            if printf '%s' "$metadata" | grep -Eq \
+              'JWT_SECRET|JWT_PREVIOUS_SECRETS|DATABASE_URL|PGPASSWORD|POSTGRES_PASSWORD'
+            then
+              echo "Runtime secret variable found in image metadata: $image" >&2
+              exit 1
+            fi
           done
 
       - name: Login to GitHub Container Registry

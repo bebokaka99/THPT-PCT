@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import logo from '../../assets/logo.png';
+import { publicEnv } from '../../config/public-env';
 
 const siteName = 'THPT Phan Chu Trinh - Phan Thiết';
 const defaultDescription =
@@ -57,8 +58,7 @@ export function Seo({
   type = 'website',
 }: SeoProps) {
   useEffect(() => {
-    const configuredSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL?.trim();
-    const siteUrl = configuredSiteUrl || window.location.origin;
+    const siteUrl = publicEnv.publicSiteUrl || window.location.origin;
     const canonicalUrl = getAbsoluteUrl(
       canonicalPath || window.location.pathname,
       siteUrl,
