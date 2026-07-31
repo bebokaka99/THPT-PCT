@@ -54,6 +54,7 @@ jobs:
       RELEASE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.release_sha }}
       DEPLOY_ACTION: ${{ github.event_name == 'workflow_dispatch' && inputs.action || 'deploy' }}
       DEPLOY_ENV_FILE: ${{ secrets.DEPLOY_ENV_FILE }}
+      DEPLOY_STATE_ROOT: ${{ vars.DEPLOY_STATE_ROOT }}
       APP_URL: ${{ vars.APP_URL }}
     steps:
       - name: Checkout release source
@@ -112,6 +113,7 @@ jobs:
       RELEASE_SHA: ${{ inputs.release_sha }}
       DEPLOY_ACTION: ${{ inputs.action }}
       DEPLOY_ENV_FILE: ${{ secrets.DEPLOY_ENV_FILE }}
+      DEPLOY_STATE_ROOT: ${{ vars.DEPLOY_STATE_ROOT }}
       APP_URL: ${{ vars.APP_URL }}
     steps:
       - name: Validate production request

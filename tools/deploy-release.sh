@@ -27,7 +27,13 @@ if [[ ! -f "$env_file" ]]; then
 fi
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-state_directory="$project_root/.deploy/$environment_name"
+state_root="${DEPLOY_STATE_ROOT:-${XDG_STATE_HOME:-$HOME/.local/state}/thpt-pct-pt}"
+if [[ "$state_root" != /* ]]; then
+  echo "DEPLOY_STATE_ROOT must be an absolute path." >&2
+  exit 1
+fi
+
+state_directory="$state_root/$environment_name"
 release_directory="$state_directory/releases"
 release_file="$release_directory/$release_sha.env"
 current_file="$state_directory/current-release"

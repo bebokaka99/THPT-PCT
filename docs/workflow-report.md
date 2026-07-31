@@ -1892,3 +1892,14 @@ Task 6.2 đã hoàn thành.
 Vì vậy Task 6.3 giữ trạng thái chưa hoàn thành. Source và local gates đã pass;
 chỉ chuyển sang completed sau khi chạy được các external gates nêu trong
 `docs/workflow/phase-6-production-prep/6.3-cicd-pipeline.md`.
+
+### Harden deployment state
+
+- Sửa deploy/rollback để lưu release state tại `DEPLOY_STATE_ROOT` bên ngoài
+  Actions checkout; mặc định dùng thư mục state bền vững trong home của runner.
+- Từ chối `DEPLOY_STATE_ROOT` dạng relative để tránh vô tình ghi state vào
+  workspace có thể bị `actions/checkout` dọn sạch.
+- Đã chạy drill cô lập deploy A -> B -> rollback A với state nằm ngoài repository:
+  smoke test pass, `current-release` quay về A và `previous-release` là B.
+- Đã dọn toàn bộ file/env/image/volume tạm của drill; Docker stack local chính
+  vẫn healthy và frontend/backend trả HTTP 200.
