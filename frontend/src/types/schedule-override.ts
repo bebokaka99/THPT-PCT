@@ -1,3 +1,5 @@
+import type { SchoolShift } from './classroom';
+
 export type ScheduleOverrideType = 'substitute' | 'reschedule' | 'room_change' | 'cancelled';
 export type ScheduleOverrideStatus = 'draft' | 'proposed' | 'published' | 'archived';
 
@@ -71,4 +73,16 @@ export type ScheduleOverrideInput = {
   new_lesson_index?: number | null;
   room?: string | null;
   reason: string;
+};
+
+export type ScheduleOverrideOptions = {
+  timetable_item_id: number;
+  subject_id: number | null;
+  subject_name: string;
+  substitute_teachers: Array<{
+    user_id: number;
+    full_name: string;
+    email: string | null;
+  }>;
+  shifts: SchoolShift[];
 };

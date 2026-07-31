@@ -7,7 +7,11 @@ import { hashPassword } from '../src/utils/password.js';
 type LoginResponse = { accessToken: string };
 type ResponseData<T> = { data: T };
 
-async function createUser(email: string, role: 'admin' | 'teacher' | 'student', password: string) {
+async function createUser(
+  email: string,
+  role: 'admin' | 'teacher' | 'student' | 'guardian',
+  password: string,
+) {
   const result = await postgresPool.query<{ id: number }>(
     `INSERT INTO users (email, full_name, password_hash, status) VALUES ($1, $2, $3, 'active') RETURNING id`,
     [email, `Override smoke ${role}`, await hashPassword(password)],
@@ -63,9 +67,20 @@ async function run() {
   try {
     const adminId = await createUser(`override-admin-${suffix}@pct.local`, 'admin', password);
     const teacherId = await createUser(`override-teacher-${suffix}@pct.local`, 'teacher', password);
+    const substituteTeacherId = await createUser(`override-substitute-${suffix}@pct.local`, 'teacher', password);
     const studentId = await createUser(`override-student-${suffix}@pct.local`, 'student', password);
+    const unlinkedStudentId = await createUser(`override-unlinked-${suffix}@pct.local`, 'student', password);
+    const guardianId = await createUser(`override-guardian-${suffix}@pct.local`, 'guardian', password);
     const outsiderTeacherId = await createUser(`override-outsider-${suffix}@pct.local`, 'teacher', password);
-    userIds.push(adminId, teacherId, studentId, outsiderTeacherId);
+    userIds.push(
+      adminId,
+      teacherId,
+      substituteTeacherId,
+      studentId,
+      unlinkedStudentId,
+      guardianId,
+      outsiderTeacherId,
+    );
     const classroom = await postgresPool.query<{ id: number }>(
       `INSERT INTO classrooms (name, school_year, academic_year_id, grade_level, is_active)
        VALUES ($1, $2, $3, 12, TRUE) RETURNING id`,
@@ -94,6 +109,18 @@ async function run() {
        VALUES ($1, $2, $3, $4, 'active', $5::date, $6) RETURNING id`,
       [teacherId, classroomId, subjectId, p.semester_id, p.semester_start, adminId],
     );
+    await postgresPool.query(
+      `INSERT INTO teaching_assignments (teacher_user_id, classroom_id, subject_id, semester_id, status, assigned_at, created_by_user_id)
+       VALUES ($1, $2, $3, $4, 'active', $5::date, $6)`,
+      [substituteTeacherId, classroomId, subjectId, p.semester_id, p.semester_start, adminId],
+    );
+    await postgresPool.query(
+      `INSERT INTO student_guardian_links (
+         guardian_user_id, student_user_id, relationship, status,
+         invited_by_user_id, verified_by_user_id, verified_at
+       ) VALUES ($1, $2, 'Phụ huynh', 'verified', $3, $3, CURRENT_TIMESTAMP)`,
+      [guardianId, studentId, adminId],
+    );
     const shift = await postgresPool.query<{ id: number }>(`SELECT id FROM school_shifts WHERE code = 'morning'`);
     const timetable = await postgresPool.query<{ id: number }>(
       `INSERT INTO timetables (classroom_id, school_year, semester, academic_year_id, semester_id, title, status, version_number, is_active, created_by_user_id)
@@ -113,9 +140,28 @@ async function run() {
     const admin = await login(baseUrl, `override-admin-${suffix}@pct.local`, password);
     const teacher = await login(baseUrl, `override-teacher-${suffix}@pct.local`, password);
     const student = await login(baseUrl, `override-student-${suffix}@pct.local`, password);
+    const guardian = await login(baseUrl, `override-guardian-${suffix}@pct.local`, password);
     const headers = (token: string) => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' });
     const overrideDate = nextMonday(p.semester_start);
     assert.ok(overrideDate <= p.semester_end, 'Semester must contain a Monday');
+    const options = await fetch(
+      `${baseUrl}/schedule-overrides/classrooms/${classroomId}/options?timetable_item_id=${item.rows[0].id}`,
+      { headers: headers(teacher.accessToken) },
+    );
+    assert.equal(options.status, 200);
+    const optionBody = await options.json() as ResponseData<{
+      substitute_teachers: Array<{ user_id: number }>;
+      shifts: Array<{ id: number; periods: Array<{ period_index: number }> }>;
+    }>;
+    assert.ok(optionBody.data.substitute_teachers.some(
+      (candidate) => candidate.user_id === substituteTeacherId,
+    ));
+    assert.ok(!optionBody.data.substitute_teachers.some(
+      (candidate) => candidate.user_id === outsiderTeacherId || candidate.user_id === teacherId,
+    ));
+    assert.ok(optionBody.data.shifts.some(
+      (candidate) => candidate.periods.some((bell) => bell.period_index === 1),
+    ));
     const before = await postgresPool.query<{ total: number }>(`SELECT COUNT(*)::integer AS total FROM user_notifications WHERE user_id = $1`, [studentId]);
     const create = await fetch(`${baseUrl}/schedule-overrides/classrooms/${classroomId}`, {
       method: 'POST', headers: headers(teacher.accessToken),
@@ -145,6 +191,20 @@ async function run() {
     assert.ok(recipientDebug.rows.some((row) => Number(row.id) === studentId), 'Student enrollment must be eligible for notification');
     const dailyAfter = await fetch(`${baseUrl}/schedule-overrides/classrooms/${classroomId}/daily-schedule?date=${overrideDate}`, { headers: headers(student.accessToken) });
     assert.equal((await dailyAfter.json() as ResponseData<{ data: Array<{ room: string; override_id: number | null }> }>).data.data[0].room, 'B203');
+    const guardianDaily = await fetch(
+      `${baseUrl}/schedule-overrides/guardians/students/${studentId}/daily-schedule?date=${overrideDate}`,
+      { headers: headers(guardian.accessToken) },
+    );
+    assert.equal(guardianDaily.status, 200);
+    assert.equal(
+      (await guardianDaily.json() as ResponseData<{ data: Array<{ room: string }> }>).data.data[0].room,
+      'B203',
+    );
+    const unlinkedDaily = await fetch(
+      `${baseUrl}/schedule-overrides/guardians/students/${unlinkedStudentId}/daily-schedule?date=${overrideDate}`,
+      { headers: headers(guardian.accessToken) },
+    );
+    assert.equal(unlinkedDaily.status, 403);
     const after = await postgresPool.query<{ total: number }>(`SELECT COUNT(*)::integer AS total FROM user_notifications WHERE user_id = $1`, [studentId]);
     assert.equal(Number(after.rows[0].total), Number(before.rows[0].total) + 1);
     const teacherDaily = await fetch(`${baseUrl}/schedule-overrides/me?date=${overrideDate}`, { headers: headers(teacher.accessToken) });
@@ -153,7 +213,7 @@ async function run() {
     const list = await fetch(`${baseUrl}/schedule-overrides?date=${overrideDate}&status=published`, { headers: headers(admin.accessToken) });
     assert.equal(list.status, 200);
     assert.ok((await list.json() as { data: Array<{ id: number }> }).data.some((row) => row.id === created.id));
-    console.log('Schedule override proposal, publish, effective daily schedule, privacy, and notification smoke test passed.');
+    console.log('Schedule override options, proposal, publish, guardian privacy, effective schedule, and notification smoke test passed.');
   } finally {
     await postgresPool.query(`SELECT set_config('app.allow_daily_schedule_override_audit_cleanup', 'on', FALSE)`);
     await postgresPool.query(`DELETE FROM notifications WHERE created_by_user_id = ANY($1::bigint[])`, [userIds]);

@@ -5,7 +5,9 @@ import {
   createScheduleOverride,
   deleteScheduleOverride,
   getClassroomDailySchedule,
+  getGuardianStudentDailySchedule,
   getMyDailySchedule,
+  getScheduleOverrideOptions,
   getScheduleOverrideAudit,
   listClassroomOverrides,
   listAllOverrides,
@@ -48,6 +50,31 @@ export const getMyDailyScheduleController: RequestHandler = async (req, res, nex
   try {
     const query = validateScheduleOverrideQuery(req.query as Record<string, unknown>);
     res.json({ data: await getMyDailySchedule(user(req), query.date) });
+  } catch (error) { next(error); }
+};
+
+export const getScheduleOverrideOptionsController: RequestHandler = async (req, res, next) => {
+  try {
+    res.json({
+      data: await getScheduleOverrideOptions(
+        user(req),
+        validateOverrideId(req.params.id),
+        validateOverrideId(String(req.query.timetable_item_id ?? ''), 'timetable_item_id'),
+      ),
+    });
+  } catch (error) { next(error); }
+};
+
+export const getGuardianStudentDailyScheduleController: RequestHandler = async (req, res, next) => {
+  try {
+    const query = validateScheduleOverrideQuery(req.query as Record<string, unknown>);
+    res.json({
+      data: await getGuardianStudentDailySchedule(
+        user(req),
+        validateOverrideId(req.params.studentId, 'studentId'),
+        query.date,
+      ),
+    });
   } catch (error) { next(error); }
 };
 

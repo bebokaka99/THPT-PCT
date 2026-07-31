@@ -28,6 +28,12 @@ export type ScheduleOverrideQuery = {
   status?: ScheduleOverrideStatus;
 };
 
+export type SubstituteTeacherOption = {
+  user_id: number;
+  full_name: string;
+  email: string | null;
+};
+
 export type ScheduleOverride = {
   id: number;
   classroom_id: number;

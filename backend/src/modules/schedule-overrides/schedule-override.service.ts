@@ -2,6 +2,8 @@ import type { AuthUser } from '../auth/auth.types.js';
 import { findClassroomById, isClassroomMember } from '../classrooms/classroom.repository.js';
 import { HttpError } from '../../utils/http-error.js';
 import { createScheduleOverrideNotifications } from '../notifications/notification.service.js';
+import { findVerifiedGuardianChild } from '../guardians/guardian.repository.js';
+import { listSchoolShifts } from '../timetables/timetable.repository.js';
 import {
   createOverrideRecord,
   deleteOverrideRecord,
@@ -9,6 +11,7 @@ import {
   findClassroomOverrides,
   findAllOverrides,
   findDailyScheduleForTeacher,
+  findEligibleSubstituteTeachers,
   findOverrideAudit,
   findOverrideById,
   findPublishedOverrideConflicts,
@@ -133,6 +136,60 @@ export async function getMyDailySchedule(user: AuthUser, date = currentVietnamDa
     throw new HttpError(403, 'Teacher role is required');
   }
   return { date, data: await findDailyScheduleForTeacher(user.id, date) };
+}
+
+export async function getScheduleOverrideOptions(
+  user: AuthUser,
+  classroomId: number,
+  timetableItemId: number,
+) {
+  await ensureManage(user, classroomId);
+  const context = await findPublishedTimetableItemContext(timetableItemId);
+  if (!context || context.classroom_id !== classroomId) {
+    throw new HttpError(404, 'Published timetable item not found');
+  }
+  if (!isAdmin(user) && context.teacher_user_id !== user.id) {
+    throw new HttpError(403, 'Teacher can only change their own lesson');
+  }
+  const substituteTeachers = context.subject_id && context.semester_id
+    ? await findEligibleSubstituteTeachers({
+        classroomId,
+        subjectId: context.subject_id,
+        semesterId: context.semester_id,
+        excludeTeacherUserId: context.teacher_user_id,
+      })
+    : [];
+  const shifts = (await listSchoolShifts()).filter((shift) => shift.is_active);
+  return {
+    timetable_item_id: context.id,
+    subject_id: context.subject_id,
+    subject_name: context.subject_name,
+    substitute_teachers: substituteTeachers,
+    shifts,
+  };
+}
+
+export async function getGuardianStudentDailySchedule(
+  user: AuthUser,
+  studentUserId: number,
+  date = currentVietnamDate(),
+) {
+  if (!user.roles.includes('guardian')) {
+    throw new HttpError(403, 'Guardian role is required');
+  }
+  const child = await findVerifiedGuardianChild(user.id, studentUserId);
+  if (!child) throw new HttpError(403, 'Verified guardian link required');
+  if (!child.classroom_id) {
+    return { date, child, classroom: null, data: [] };
+  }
+  const classroom = await findClassroomById(child.classroom_id);
+  if (!classroom) throw new HttpError(404, 'Classroom not found');
+  return {
+    date,
+    child,
+    classroom,
+    data: await findClassroomDailySchedule(child.classroom_id, date),
+  };
 }
 
 export async function createScheduleOverride(user: AuthUser, classroomId: number, input: ScheduleOverrideInput) {

@@ -14,6 +14,7 @@ function mapDate(value: unknown) {
 export async function findPublishedTimetableItemContext(itemId: number) {
   const [rows] = await databasePool.query<Row[]>(
     `SELECT item.id, item.timetable_id, item.teacher_user_id, item.subject_id,
+      item.subject_name,
       item.day_of_week, item.shift_id, item.lesson_index, item.room,
       timetable.classroom_id, timetable.semester_id, timetable.status
      FROM timetable_items item
@@ -30,11 +31,46 @@ export async function findPublishedTimetableItemContext(itemId: number) {
     semester_id: rows[0].semester_id === null ? null : Number(rows[0].semester_id),
     teacher_user_id: rows[0].teacher_user_id === null ? null : Number(rows[0].teacher_user_id),
     subject_id: rows[0].subject_id === null ? null : Number(rows[0].subject_id),
+    subject_name: String(rows[0].subject_name),
     day_of_week: Number(rows[0].day_of_week),
     shift_id: Number(rows[0].shift_id),
     lesson_index: Number(rows[0].lesson_index),
     room: rows[0].room ?? null,
   };
+}
+
+export async function findEligibleSubstituteTeachers(input: {
+  classroomId: number;
+  subjectId: number;
+  semesterId: number;
+  excludeTeacherUserId: number | null;
+}) {
+  const [rows] = await databasePool.query<Row[]>(
+    `SELECT DISTINCT teacher.id AS user_id, teacher.full_name, teacher.email
+     FROM teaching_assignments assignment
+     JOIN users teacher ON teacher.id = assignment.teacher_user_id
+     JOIN user_roles user_role ON user_role.user_id = teacher.id
+     JOIN roles role ON role.id = user_role.role_id AND role.name = 'teacher'
+     WHERE assignment.classroom_id = ?
+       AND assignment.subject_id = ?
+       AND assignment.semester_id = ?
+       AND assignment.status = 'active'
+       AND teacher.status = 'active'
+       AND (?::BIGINT IS NULL OR teacher.id <> ?::BIGINT)
+     ORDER BY teacher.full_name, teacher.id`,
+    [
+      input.classroomId,
+      input.subjectId,
+      input.semesterId,
+      input.excludeTeacherUserId,
+      input.excludeTeacherUserId,
+    ],
+  );
+  return rows.map((row) => ({
+    user_id: Number(row.user_id),
+    full_name: String(row.full_name),
+    email: row.email ? String(row.email) : null,
+  }));
 }
 
 export async function findPublishedOverrideConflicts(input: {

@@ -12,6 +12,13 @@
 - Thêm UI `/admin/schedule-overrides`, panel lịch trong ngày và form đề xuất trong
   tab timetable của teacher/student classroom.
 - Notification gửi sau publish cho student và guardian hợp lệ; draft/proposal không gửi.
+- Hoàn thiện selector proposal: teacher chọn giáo viên thay thế theo tên từ đúng
+  assignment lớp/môn/học kỳ; ca và tiết lấy từ school shift/bell period đang hoạt động,
+  không còn nhập ID kỹ thuật thủ công.
+- Parent Academic Calendar hiển thị lịch hiệu lực theo ngày của từng học sinh đã
+  xác minh. Backend từ chối guardian truy cập student không có verified link.
+- Thêm API options và guardian daily schedule; smoke test bao phủ candidate filtering,
+  guardian isolation và lịch sau publish.
 - Backend/frontend build, migration/seed Docker và smoke test override: pass.
 - Task tiếp theo: **5.19 - Homework Submission & Feedback Completion**.
 
