@@ -1875,13 +1875,17 @@ Task 6.2 đã hoàn thành.
 
 - Source đã push lên `https://github.com/bebokaka99/THPT-PCT`.
 - Quality Gate #1 cho commit `0016c0b`: success.
+- Quality Gate #2 cho commit `dab0c83`: success, không còn warning Node.js 20.
 - Backend, frontend và immutable container images jobs đều pass.
 - Release manifest artifact đã được tạo.
 - Ba GHCR packages backend/frontend/PostgreSQL đã được publish.
+- `main` đã bật strict required checks, enforce administrators và required
+  conversation resolution.
+- Đã tạo environments `staging`/`production`; production yêu cầu reviewer
+  `bebokaka99`.
 
 ### Còn chờ hạ tầng ngoài
 
-- Chưa bật branch protection bắt buộc quality checks.
 - Chưa có self-hosted staging/production runner và GitHub Environment approval.
 - Deploy Release #1 đang queued vì chưa có runner label `staging`.
 
