@@ -45,13 +45,15 @@ Mỗi GitHub Environment cần:
 
 - secret `DEPLOY_ENV_FILE`: absolute path tới env file nằm ngoài repository;
 - variable `APP_URL`: HTTPS origin của environment.
+- variable `DEPLOY_STATE_ROOT`: absolute path nằm ngoài Actions checkout, ví dụ
+  `/var/lib/thpt-pct-pt/deploy-state`.
 
 Environment `production` phải có required reviewers. Staging tự deploy sau khi
 Quality Gate của `main` pass; production chỉ deploy bằng manual dispatch.
 
 Runner cần Docker Compose v2, quyền đọc GHCR package và quyền ghi thư mục
-`.deploy`. Env file chứa database/JWT secrets và `POSTGRES_IMAGE` đã được phê
-duyệt. App deployment chỉ đổi backend/frontend images.
+`DEPLOY_STATE_ROOT`. Env file chứa database/JWT secrets và `POSTGRES_IMAGE` đã
+được phê duyệt. App deployment chỉ đổi backend/frontend images.
 
 Self-hosted runner phải dùng GitHub Actions Runner `2.327.1` trở lên vì các
 official actions trong workflow chạy trên Node.js 24.
@@ -65,6 +67,12 @@ official actions trong workflow chạy trên Node.js 24.
 - pull images, chạy Compose với `--no-build`;
 - backend entrypoint chạy migration dưới PostgreSQL advisory lock;
 - ghi current/previous release state.
+
+Release state không nằm trong checkout. Nếu `DEPLOY_STATE_ROOT` không được cấu
+hình, script dùng `${XDG_STATE_HOME:-$HOME/.local/state}/thpt-pct-pt`. Thư mục
+này phải nằm trên persistent disk và được backup cùng deployment metadata;
+`actions/checkout` có thể dọn toàn bộ file không được Git theo dõi trong
+workspace ở mỗi run.
 
 `tools/smoke-deployment.sh` kiểm tra portal, `/api/health` và
 `/api/health/db`.
