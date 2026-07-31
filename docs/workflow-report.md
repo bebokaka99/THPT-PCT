@@ -1932,6 +1932,7 @@ chỉ chuyển sang completed sau khi chạy được các external gates nêu t
 
 ### Còn chờ hạ tầng ngoài
 
-- GitHub PR/main image gate phải pass với CI mới.
+- GitHub PR Quality Gate run `30631500718`: success cho backend, frontend và
+  immutable container images; source/bundle/image secret gates đều pass.
 - Chỉ cấu hình `DEPLOY_ENV_B64` thật khi có staging/production target; không dùng
   local development credential hoặc secret giả để đóng checklist.
