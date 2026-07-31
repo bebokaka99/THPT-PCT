@@ -1,5 +1,20 @@
 # Workflow Report
 
+## 2026-08-01 - Task 5.18 Substitute Teaching & Daily Schedule Overrides
+
+- Thêm PostgreSQL migrations `040_create_daily_schedule_overrides.sql` và
+  `041_allow_daily_schedule_override_audit_cleanup.sql`, cùng seed quyền
+  `timetable_overrides.manage/propose/read`.
+- Thêm API `/api/schedule-overrides` cho proposal, publish, archive, audit,
+  lịch lớp trong ngày và lịch dạy cá nhân sau override.
+- Teacher chỉ đề xuất trong lớp/tiết có assignment của mình; admin kiểm tra và
+  công bố. Student chỉ nhận dữ liệu published trong lớp được enrollment.
+- Thêm UI `/admin/schedule-overrides`, panel lịch trong ngày và form đề xuất trong
+  tab timetable của teacher/student classroom.
+- Notification gửi sau publish cho student và guardian hợp lệ; draft/proposal không gửi.
+- Backend/frontend build, migration/seed Docker và smoke test override: pass.
+- Task tiếp theo: **5.19 - Homework Submission & Feedback Completion**.
+
 ## 2026-08-01 - Task 5.17 Exam Schedule & Academic Calendar
 
 - Thêm migration `037` cho lịch học vụ/audit, `038` cho cleanup audit có kiểm

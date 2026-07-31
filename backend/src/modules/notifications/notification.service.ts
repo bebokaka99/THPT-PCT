@@ -208,3 +208,42 @@ export async function createAcademicCalendarNotifications(input: {
   }
   await Promise.all(jobs);
 }
+
+export async function createScheduleOverrideNotifications(input: {
+  classroomId: number;
+  overrideId: number;
+  date: string;
+  createdByUserId: number;
+  title: string;
+  message: string;
+}) {
+  // Use midday so PostgreSQL date casts cannot move a Vietnam calendar date
+  // to the previous UTC day when the local date is midnight.
+  const effectiveDate = new Date(`${input.date}T12:00:00+07:00`);
+  const [students, guardians] = await Promise.all([
+    findClassroomStudentUserIdsAtDate(input.classroomId, effectiveDate),
+    findClassroomGuardianUserIdsAtDate(input.classroomId, effectiveDate),
+  ]);
+  const jobs: Array<Promise<unknown>> = [];
+  if (students.length) {
+    jobs.push(createNotificationRecord({
+      title: input.title,
+      message: input.message,
+      type: 'timetable',
+      target_role: 'student',
+      classroom_id: input.classroomId,
+      related_url: `/student/classes/${input.classroomId}?tab=timetable&date=${input.date}`,
+    }, input.createdByUserId, students));
+  }
+  if (guardians.length) {
+    jobs.push(createNotificationRecord({
+      title: input.title,
+      message: input.message,
+      type: 'timetable',
+      target_role: 'guardian',
+      classroom_id: input.classroomId,
+      related_url: `/parent/students?tab=timetable&date=${input.date}`,
+    }, input.createdByUserId, guardians));
+  }
+  await Promise.all(jobs);
+}

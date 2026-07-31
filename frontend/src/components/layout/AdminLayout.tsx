@@ -16,6 +16,7 @@ const sidebarItems = [
   { label: 'Xếp lớp học sinh', to: '/admin/enrollments' },
   { label: 'Phân công giảng dạy', to: '/admin/teaching-assignments' },
   { label: 'Lịch kiểm tra & học vụ', to: '/admin/academic-calendar' },
+  { label: 'Duyệt thay đổi lịch', to: '/admin/schedule-overrides' },
   { label: 'Ca học & giờ tiết', to: '/admin/timetable-settings' },
   { label: 'Cấu hình đầu điểm', to: '/admin/assessment-configurations' },
   { label: 'Chuyên cần', to: '/admin/attendance' },

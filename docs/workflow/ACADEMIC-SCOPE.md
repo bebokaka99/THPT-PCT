@@ -20,7 +20,7 @@ Tài liệu này là ma trận chức năng theo vai trò. Ký hiệu:
 | Import/export và báo cáo học vụ | Done | 5.14 |
 | Ca học, thời khóa biểu và phát hiện xung đột | Done | 5.15 |
 | Lịch kiểm tra/thi toàn trường | Done | 5.17 |
-| Dạy thay, đổi tiết, đổi phòng | Planned | 5.18 |
+| Dạy thay, đổi tiết, đổi phòng | Done | 5.18 |
 | Truyền thông có xác nhận đã đọc | Planned | 5.20 |
 | Duyệt kế hoạch bài dạy theo tổ chuyên môn | Planned | 5.21 |
 | Theo dõi sổ đầu bài toàn trường | Planned | 5.22 |
@@ -35,7 +35,7 @@ Tài liệu này là ma trận chức năng theo vai trò. Ký hiệu:
 | Xử lý đơn theo phạm vi chủ nhiệm | Done | 5.13 |
 | Lịch dạy cá nhân không trùng tiết | Done | 5.15 |
 | Lịch kiểm tra/thi theo lớp/môn | Done | 5.17 |
-| Báo nghỉ, dạy thay, đổi tiết/phòng | Planned | 5.18 |
+| Báo nghỉ, dạy thay, đổi tiết/phòng | Done | 5.18 |
 | Nhận bài, phản hồi và chấm bài nộp | Polish | 5.19 |
 | Gửi thông báo lớp/phụ huynh có theo dõi đọc | Planned | 5.20 |
 | Kế hoạch bài dạy và gửi tổ trưởng duyệt | Planned | 5.21 |

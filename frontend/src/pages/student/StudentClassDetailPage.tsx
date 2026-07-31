@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { TimetablePrintView } from '../../components/classrooms/TimetablePrintView';
+import { DailySchedulePanel } from '../../components/timetable/DailySchedulePanel';
 import { StudentPortalLayout } from '../../components/layout/StudentPortalLayout';
 import { resolvePublicMediaUrl } from '../../lib/media-url';
 import {
@@ -217,9 +218,11 @@ function ClassroomDocuments({ documents }: { documents: ClassroomDocument[] }) {
 
 function ClassroomTimetable({
   classroom,
+  token,
   timetable,
 }: {
   classroom: Classroom;
+  token: string;
   timetable: Timetable | null;
 }) {
   if (!timetable) {
@@ -232,7 +235,7 @@ function ClassroomTimetable({
     );
   }
 
-  return <TimetablePrintView classroom={classroom} timetable={timetable} />;
+  return <div className="grid gap-6"><DailySchedulePanel classroomId={classroom.id} token={token} /><TimetablePrintView classroom={classroom} timetable={timetable} /></div>;
 }
 
 function ClassroomMembers({ members }: { members: ClassroomMember[] }) {
@@ -399,6 +402,7 @@ export function StudentClassDetailPage() {
             {activeTab === 'timetable' && (
               <ClassroomTimetable
                 classroom={data.classroom}
+                token={accessToken!}
                 timetable={data.timetable}
               />
             )}

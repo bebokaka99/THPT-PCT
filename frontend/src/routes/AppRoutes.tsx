@@ -28,6 +28,11 @@ const AdminAcademicCalendarPage = lazy(() =>
     default: module.AdminAcademicCalendarPage,
   })),
 );
+const AdminScheduleOverridesPage = lazy(() =>
+  import('../pages/admin/AdminScheduleOverridesPage').then((module) => ({
+    default: module.AdminScheduleOverridesPage,
+  })),
+);
 const AdminSubjectsPage = lazy(() =>
   import('../pages/admin/AdminSubjectsPage').then((module) => ({
     default: module.AdminSubjectsPage,
@@ -502,6 +507,10 @@ export function AppRoutes() {
           <Route
             path="/admin/timetable-settings"
             element={protectedAdminPage(<AdminTimetableSettingsPage />, 'classrooms.manage')}
+          />
+          <Route
+            path="/admin/schedule-overrides"
+            element={protectedAdminPage(<AdminScheduleOverridesPage />, 'timetable_overrides.manage')}
           />
           <Route
             path="/admin/documents"
