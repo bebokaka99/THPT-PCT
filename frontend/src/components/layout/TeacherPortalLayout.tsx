@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import {
-  BookOpenCheck,
-  CalendarCheck,
-  Calculator,
-  ChartNoAxesColumnIncreasing,
   BadgeCheck,
+  BookOpenCheck,
+  Calculator,
+  CalendarCheck,
+  CalendarDays,
+  ChartNoAxesColumnIncreasing,
   ClipboardList,
   FileSignature,
   LayoutDashboard,
@@ -22,54 +23,16 @@ import { MainLayout } from './MainLayout';
 const navigation = [
   { label: 'Tổng quan', to: '/teacher', end: true, icon: LayoutDashboard },
   { label: 'Lớp phụ trách', to: '/teacher/classes', end: false, icon: School },
-  {
-    label: 'Lớp giảng dạy',
-    to: '/teacher/teaching-assignments',
-    end: false,
-    icon: BookOpenCheck,
-  },
-  {
-    label: 'Cấu hình đầu điểm',
-    to: '/teacher/assessment-configurations',
-    end: false,
-    icon: Calculator,
-  },
-  {
-    label: 'Điểm danh',
-    to: '/teacher/attendance',
-    end: false,
-    icon: CalendarCheck,
-  },
-  {
-    label: 'Bài tập',
-    to: '/teacher/assignments',
-    end: false,
-    icon: ClipboardList,
-  },
-  {
-    label: 'Sổ điểm',
-    to: '/teacher/gradebook',
-    end: false,
-    icon: TableProperties,
-  },
-  {
-    label: 'Phiếu kết quả',
-    to: '/teacher/report-cards',
-    end: false,
-    icon: ChartNoAxesColumnIncreasing,
-  },
-  {
-    label: 'Hạnh kiểm',
-    to: '/teacher/conduct',
-    end: false,
-    icon: BadgeCheck,
-  },
-  {
-    label: 'Đơn học sinh',
-    to: '/teacher/student-requests',
-    end: false,
-    icon: FileSignature,
-  },
+  { label: 'Lớp giảng dạy', to: '/teacher/teaching-assignments', end: false, icon: BookOpenCheck },
+  { label: 'Thời khóa biểu', to: '/teacher/timetable', end: false, icon: CalendarDays },
+  { label: 'Lịch kiểm tra & học vụ', to: '/teacher/academic-calendar', end: false, icon: CalendarDays },
+  { label: 'Cấu hình đầu điểm', to: '/teacher/assessment-configurations', end: false, icon: Calculator },
+  { label: 'Điểm danh', to: '/teacher/attendance', end: false, icon: CalendarCheck },
+  { label: 'Bài tập', to: '/teacher/assignments', end: false, icon: ClipboardList },
+  { label: 'Sổ điểm', to: '/teacher/gradebook', end: false, icon: TableProperties },
+  { label: 'Phiếu kết quả', to: '/teacher/report-cards', end: false, icon: ChartNoAxesColumnIncreasing },
+  { label: 'Hạnh kiểm', to: '/teacher/conduct', end: false, icon: BadgeCheck },
+  { label: 'Đơn học sinh', to: '/teacher/student-requests', end: false, icon: FileSignature },
   { label: 'Hồ sơ', to: '/teacher/profile', end: false, icon: UserRound },
 ];
 
@@ -99,63 +62,27 @@ export function TeacherPortalLayout({ children }: { children: ReactNode }) {
               <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                 <span className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-sm font-bold text-white">
                   {initial}
-                  {avatarUrl && (
-                    <img
-                      src={avatarUrl}
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover"
-                      onError={(event) => event.currentTarget.remove()}
-                    />
-                  )}
+                  {avatarUrl && <img src={avatarUrl} alt="" className="absolute inset-0 h-full w-full object-cover" onError={(event) => event.currentTarget.remove()} />}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-slate-950">
-                    {user?.fullName || 'Giáo viên'}
-                  </p>
-                  <p className="truncate text-xs text-slate-500">
-                    {user?.email || user?.username}
-                  </p>
+                  <p className="truncate text-sm font-bold text-slate-950">{user?.fullName || 'Giáo viên'}</p>
+                  <p className="truncate text-xs text-slate-500">{user?.email || user?.username}</p>
                 </div>
               </div>
 
               <nav className="mt-3 grid gap-1" aria-label="Điều hướng giáo viên">
                 {navigation.map(({ end, icon: Icon, label, to }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    end={end}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition ${
-                        isActive
-                          ? 'bg-emerald-50 text-emerald-800'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
-                      }`
-                    }
-                  >
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                    {label}
+                  <NavLink key={to} to={to} end={end} className={({ isActive }) => `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'}`}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />{label}
                   </NavLink>
                 ))}
               </nav>
             </div>
 
-            <nav
-              className="flex gap-2 overflow-x-auto border border-slate-200 bg-white p-2 shadow-sm lg:hidden"
-              aria-label="Điều hướng giáo viên"
-            >
+            <nav className="flex gap-2 overflow-x-auto border border-slate-200 bg-white p-2 shadow-sm lg:hidden" aria-label="Điều hướng giáo viên">
               {navigation.map(({ end, icon: Icon, label, to }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  end={end}
-                  className={({ isActive }) =>
-                    `inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold ${
-                      isActive ? 'bg-slate-900 text-white' : 'text-slate-600'
-                    }`
-                  }
-                >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                  {label}
+                <NavLink key={to} to={to} end={end} className={({ isActive }) => `inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold ${isActive ? 'bg-slate-900 text-white' : 'text-slate-600'}`}>
+                  <Icon className="h-4 w-4" aria-hidden="true" />{label}
                 </NavLink>
               ))}
             </nav>

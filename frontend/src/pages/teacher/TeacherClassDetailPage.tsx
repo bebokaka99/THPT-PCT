@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { TimetablePrintView } from '../../components/classrooms/TimetablePrintView';
+import { DailySchedulePanel } from '../../components/timetable/DailySchedulePanel';
 import { TeacherPortalLayout } from '../../components/layout/TeacherPortalLayout';
 import {
   TeacherClassDocumentsPanel,
@@ -257,6 +258,7 @@ export function TeacherClassDetailPage() {
             )}
             {activeTab === 'timetable' && (
               <div className="grid gap-6">
+                <DailySchedulePanel classroomId={classroomId} token={accessToken!} canManage />
                 {data.timetable && (
                   <TimetablePrintView
                     classroom={data.classroom}

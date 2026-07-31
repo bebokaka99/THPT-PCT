@@ -177,10 +177,12 @@ function validateJwtExpiry(value: string) {
   return value;
 }
 
+function isLoopbackHostname(hostname: string) {
+  return ['localhost', '127.0.0.1', '::1'].includes(hostname.toLowerCase());
+}
+
 function isLocalServiceHostname(hostname: string) {
-  return ['localhost', '127.0.0.1', '::1', 'postgres'].includes(
-    hostname.toLowerCase(),
-  );
+  return isLoopbackHostname(hostname) || hostname.toLowerCase() === 'postgres';
 }
 
 const nodeEnv = readEnum(
@@ -352,8 +354,16 @@ export function validateApplicationEnvironment() {
     }
   }
 
-  if (!env.security.cookieSecure) {
-    throw new Error('COOKIE_SECURE must be true in staging/production');
+  const usesOnlyLoopbackOrigins =
+    isLoopbackHostname(publicUrl.hostname) &&
+    env.security.corsOrigins.every((origin) =>
+      isLoopbackHostname(new URL(origin).hostname),
+    );
+
+  if (!env.security.cookieSecure && !usesOnlyLoopbackOrigins) {
+    throw new Error(
+      'COOKIE_SECURE must be true in staging/production unless all browser origins are loopback addresses',
+    );
   }
 
   if (!env.database.url) {

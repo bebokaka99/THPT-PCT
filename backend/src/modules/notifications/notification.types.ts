@@ -1,4 +1,11 @@
-export type NotificationType = 'system' | 'school' | 'classroom' | 'post' | 'document';
+export type NotificationType =
+  | 'system'
+  | 'school'
+  | 'classroom'
+  | 'post'
+  | 'document'
+  | 'event'
+  | 'timetable';
 export type NotificationTargetRole =
   | 'all'
   | 'admin'

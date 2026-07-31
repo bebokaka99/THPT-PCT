@@ -16,6 +16,8 @@ import type {
   GradebookStudent,
   GradebookSummary,
   StudentGradeTotal,
+  StudentGradeFilterOptions,
+  StudentGradeQuery,
   StudentScore,
   StudentScoreAudit,
   StudentPublishedGrade,
@@ -29,6 +31,7 @@ const summarySelect = `
     subject.code AS subject_code,
     subject.name AS subject_name,
     semester.name AS semester_name,
+    academic_year.id AS academic_year_id,
     academic_year.name AS academic_year_name,
     assignment.teacher_user_id,
     teacher.full_name AS teacher_name,
@@ -67,6 +70,7 @@ function mapSummary(row: Row): GradebookSummary {
     subject_name: String(row.subject_name),
     semester_id: Number(row.semester_id),
     semester_name: String(row.semester_name),
+    academic_year_id: Number(row.academic_year_id),
     academic_year_name: String(row.academic_year_name),
     teacher_user_id: Number(row.teacher_user_id),
     teacher_name: String(row.teacher_name),
@@ -979,26 +983,43 @@ export async function findGradebookWorkflowAudits(
 
 export async function findPublishedGradesForStudent(
   studentUserId: number,
+  query: StudentGradeQuery = {},
 ): Promise<StudentPublishedGrade[]> {
+  const conditions = [
+    "gradebook.status IN ('approved', 'locked')",
+    `EXISTS (
+      SELECT 1
+      FROM student_enrollments enrollment
+      JOIN semesters scope_semester
+        ON scope_semester.id = gradebook.semester_id
+      WHERE enrollment.student_user_id = ?
+        AND enrollment.classroom_id = gradebook.classroom_id
+        AND enrollment.enrolled_at <= scope_semester.end_date
+        AND (
+          enrollment.ended_at IS NULL
+          OR enrollment.ended_at >= scope_semester.start_date
+        )
+    )`,
+  ];
+  const params: unknown[] = [studentUserId];
+  if (query.academic_year_id) {
+    conditions.push('academic_year.id = ?');
+    params.push(query.academic_year_id);
+  }
+  if (query.semester_id) {
+    conditions.push('gradebook.semester_id = ?');
+    params.push(query.semester_id);
+  }
+  if (query.subject_id) {
+    conditions.push('gradebook.subject_id = ?');
+    params.push(query.subject_id);
+  }
   const [rows] = await databasePool.query<Row[]>(
     `${summarySelect}
-     WHERE gradebook.status IN ('approved', 'locked')
-       AND EXISTS (
-         SELECT 1
-         FROM student_enrollments enrollment
-         JOIN semesters scope_semester
-           ON scope_semester.id = gradebook.semester_id
-         WHERE enrollment.student_user_id = ?
-           AND enrollment.classroom_id = gradebook.classroom_id
-           AND enrollment.enrolled_at <= scope_semester.end_date
-           AND (
-             enrollment.ended_at IS NULL
-             OR enrollment.ended_at >= scope_semester.start_date
-           )
-       )
+     WHERE ${conditions.join(' AND ')}
      ORDER BY academic_year.start_date DESC, semester.start_date DESC,
        subject.name`,
-    [studentUserId],
+    params,
   );
   const result: StudentPublishedGrade[] = [];
   for (const row of rows) {
@@ -1015,11 +1036,33 @@ export async function findPublishedGradesForStudent(
        WHERE gradebook.id = ?`,
       [summary.id],
     );
+    const [scoreRows] = await databasePool.query<Row[]>(
+      `SELECT gradebook_column.id AS column_id,
+         gradebook_column.category_code,
+         gradebook_column.category_name,
+         gradebook_column.entry_index,
+         gradebook_column.label,
+         gradebook_column.max_score,
+         score.state,
+         score.score
+       FROM gradebook_columns gradebook_column
+       LEFT JOIN student_scores score
+         ON score.gradebook_id = gradebook_column.gradebook_id
+        AND score.column_id = gradebook_column.id
+        AND score.student_user_id = ?
+       WHERE gradebook_column.gradebook_id = ?
+       ORDER BY gradebook_column.sort_order, gradebook_column.id`,
+      [studentUserId, summary.id],
+    );
     result.push({
       id: summary.id,
       classroom_name: summary.classroom_name,
+      academic_year_id: summary.academic_year_id,
+      semester_id: summary.semester_id,
+      subject_id: summary.subject_id,
       subject_code: summary.subject_code,
       subject_name: summary.subject_name,
+      teacher_name: summary.teacher_name,
       semester_name: summary.semester_name,
       academic_year_name: summary.academic_year_name,
       status: summary.status as 'approved' | 'locked',
@@ -1027,7 +1070,95 @@ export async function findPublishedGradesForStudent(
       final_score: total?.final_score ?? null,
       approved_at: summary.approved_at,
       locked_at: summary.locked_at,
+      scores: scoreRows.map((score) => ({
+        column_id: Number(score.column_id),
+        category_code: String(score.category_code),
+        category_name: String(score.category_name),
+        entry_index: Number(score.entry_index),
+        label: String(score.label),
+        max_score: Number(score.max_score),
+        state: score.state ?? 'unscored',
+        score: score.score == null ? null : Number(score.score),
+      })),
     });
   }
   return result;
+}
+
+export async function findPublishedGradeFilterOptionsForStudent(
+  studentUserId: number,
+): Promise<StudentGradeFilterOptions> {
+  const [rows] = await databasePool.query<Row[]>(
+    `SELECT DISTINCT
+       academic_year.id AS academic_year_id,
+       academic_year.name AS academic_year_name,
+       academic_year.start_date AS academic_year_start_date,
+       semester.id AS semester_id,
+       semester.name AS semester_name,
+       semester.start_date AS semester_start_date,
+       subject.id AS subject_id,
+       subject.code AS subject_code,
+       subject.name AS subject_name
+     FROM gradebooks gradebook
+     JOIN semesters semester ON semester.id = gradebook.semester_id
+     JOIN academic_years academic_year
+       ON academic_year.id = semester.academic_year_id
+     JOIN subjects subject ON subject.id = gradebook.subject_id
+     WHERE gradebook.status IN ('approved', 'locked')
+       AND EXISTS (
+         SELECT 1
+         FROM student_enrollments enrollment
+         WHERE enrollment.student_user_id = ?
+           AND enrollment.classroom_id = gradebook.classroom_id
+           AND enrollment.enrolled_at <= semester.end_date
+           AND (
+             enrollment.ended_at IS NULL
+             OR enrollment.ended_at >= semester.start_date
+           )
+       )
+     ORDER BY academic_year_start_date DESC, semester_start_date DESC,
+       subject_name`,
+    [studentUserId],
+  );
+  const academicYears = new Map<number, { id: number; name: string }>();
+  const semesters = new Map<
+    number,
+    { id: number; academic_year_id: number; name: string }
+  >();
+  const subjects = new Map<
+    string,
+    {
+      id: number;
+      code: string;
+      name: string;
+      academic_year_id: number;
+      semester_id: number;
+    }
+  >();
+  for (const row of rows) {
+    const academicYearId = Number(row.academic_year_id);
+    const semesterId = Number(row.semester_id);
+    const subjectId = Number(row.subject_id);
+    academicYears.set(academicYearId, {
+      id: academicYearId,
+      name: String(row.academic_year_name),
+    });
+    semesters.set(semesterId, {
+      id: semesterId,
+      academic_year_id: academicYearId,
+      name: String(row.semester_name),
+    });
+    subjects.set(`${semesterId}:${subjectId}`, {
+      id: subjectId,
+      code: String(row.subject_code),
+      name: String(row.subject_name),
+      academic_year_id: academicYearId,
+      semester_id: semesterId,
+    });
+  }
+  return {
+    academic_years: [...academicYears.values()],
+    semesters: [...semesters.values()],
+    subjects: [...subjects.values()],
+  };
 }

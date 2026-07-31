@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { TimetablePrintView } from '../../components/classrooms/TimetablePrintView';
+import { TeacherTimetableEditor } from '../../components/teacher/TeacherTimetableEditor';
 import { AdminLayout } from '../../components/layout/AdminLayout';
 import {
   addClassroomMember,
@@ -114,8 +115,15 @@ export function AdminClassroomDetailPage() {
             </div>
           </section>
         </div>
-        {classroom && timetable && (
-          <TimetablePrintView classroom={classroom} timetable={timetable} />
+        {classroom && (
+          <div className="grid gap-6">
+            {timetable && <TimetablePrintView classroom={classroom} timetable={timetable} />}
+            <TeacherTimetableEditor
+              classroom={classroom}
+              timetable={timetable}
+              onChanged={loadData}
+            />
+          </div>
         )}
       </section>
     </AdminLayout>

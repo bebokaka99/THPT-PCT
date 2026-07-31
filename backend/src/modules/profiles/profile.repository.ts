@@ -54,18 +54,33 @@ export async function upsertTeacherProfile(input: UpsertTeacherProfileInput) {
 export async function upsertStudentProfile(input: UpsertStudentProfileInput) {
   await databasePool.query(
     `
-    INSERT INTO student_profiles (user_id, student_code, full_name, class_name, date_of_birth, phone, parent_phone, avatar_url)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO student_profiles (
+      user_id, student_code, full_name, class_name, date_of_birth, phone,
+      parent_name, parent_phone, permanent_address, avatar_url
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT (user_id) DO UPDATE SET
         student_code = EXCLUDED.student_code,
         full_name = EXCLUDED.full_name,
         class_name = EXCLUDED.class_name,
         date_of_birth = EXCLUDED.date_of_birth,
         phone = EXCLUDED.phone,
+        parent_name = EXCLUDED.parent_name,
         parent_phone = EXCLUDED.parent_phone,
+        permanent_address = EXCLUDED.permanent_address,
         avatar_url = EXCLUDED.avatar_url
     `,
-    [input.user_id, input.student_code ?? null, input.full_name, input.class_name ?? null, input.date_of_birth ?? null, input.phone ?? null, input.parent_phone ?? null, input.avatar_url ?? null],
+    [
+      input.user_id,
+      input.student_code ?? null,
+      input.full_name,
+      input.class_name ?? null,
+      input.date_of_birth ?? null,
+      input.phone ?? null,
+      input.parent_name ?? null,
+      input.parent_phone ?? null,
+      input.permanent_address ?? null,
+      input.avatar_url ?? null,
+    ],
   );
   return findStudentProfileByUserId(input.user_id);
 }
@@ -97,11 +112,24 @@ export async function updateStudentProfileById(id: number, input: Partial<Upsert
           class_name = ?,
           date_of_birth = COALESCE(?, date_of_birth),
           phone = ?,
+          parent_name = ?,
           parent_phone = ?,
+          permanent_address = ?,
           avatar_url = ?
       WHERE id = ?
     `,
-    [input.student_code ?? null, input.full_name ?? null, input.class_name ?? null, input.date_of_birth ?? null, input.phone ?? null, input.parent_phone ?? null, input.avatar_url ?? null, id],
+    [
+      input.student_code ?? null,
+      input.full_name ?? null,
+      input.class_name ?? null,
+      input.date_of_birth ?? null,
+      input.phone ?? null,
+      input.parent_name ?? null,
+      input.parent_phone ?? null,
+      input.permanent_address ?? null,
+      input.avatar_url ?? null,
+      id,
+    ],
   );
   const [rows] = await databasePool.query<StudentRow[]>('SELECT * FROM student_profiles WHERE id = ? LIMIT 1', [id]);
   return rows[0] ? mapStudent(rows[0]) : null;
@@ -113,7 +141,20 @@ export async function updateMyTeacherProfile(userId: number, input: UpdateMyProf
 }
 
 export async function updateMyStudentProfile(userId: number, input: UpdateMyProfileInput) {
-  await databasePool.query('UPDATE student_profiles SET phone = ?, parent_phone = ?, avatar_url = ? WHERE user_id = ?', [input.phone ?? null, input.parent_phone ?? null, input.avatar_url ?? null, userId]);
+  await databasePool.query(
+    `UPDATE student_profiles
+     SET phone = ?, parent_name = ?, parent_phone = ?, permanent_address = ?,
+       avatar_url = ?
+     WHERE user_id = ?`,
+    [
+      input.phone ?? null,
+      input.parent_name ?? null,
+      input.parent_phone ?? null,
+      input.permanent_address ?? null,
+      input.avatar_url ?? null,
+      userId,
+    ],
+  );
   return findStudentProfileByUserId(userId);
 }
 

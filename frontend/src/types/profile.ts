@@ -19,7 +19,9 @@ export type StudentProfile = {
   class_name: string | null;
   date_of_birth: string | null;
   phone: string | null;
+  parent_name: string | null;
   parent_phone: string | null;
+  permanent_address: string | null;
   avatar_url: string | null;
   created_at?: string;
   updated_at?: string;
@@ -41,7 +43,9 @@ export type UpdateMyProfileInput = {
   phone?: string | null;
   avatar_url?: string | null;
   bio?: string | null;
+  parent_name?: string | null;
   parent_phone?: string | null;
+  permanent_address?: string | null;
 };
 
 export type ProfileAvatarUploadResult = {

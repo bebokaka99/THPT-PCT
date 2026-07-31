@@ -1,5 +1,6 @@
 import type { AttendanceSummary } from '../attendance/attendance.types.js';
 import type { StudentTranscript } from '../transcripts/transcript.types.js';
+import type { Timetable } from '../timetables/timetable.types.js';
 
 export type GuardianLinkStatus = 'pending' | 'verified' | 'revoked';
 
@@ -70,4 +71,5 @@ export type GuardianStudentSummary = {
     data: unknown[];
     summary: AttendanceSummary;
   };
+  timetable: Timetable | null;
 };

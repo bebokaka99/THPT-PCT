@@ -7,6 +7,7 @@ import {
   deleteNotificationRecord,
   findClassroomStudentUserIds,
   findClassroomStudentUserIdsAtDate,
+  findClassroomGuardianUserIdsAtDate,
   findMyNotifications,
   findNotifications,
   findRecipientUserIds,
@@ -142,4 +143,107 @@ export async function createGradebookWorkflowNotification(input: {
     input.createdByUserId,
     recipients,
   );
+}
+
+export async function createAcademicCalendarNotifications(input: {
+  classroomId: number | null;
+  teacherUserId: number | null;
+  createdByUserId: number;
+  entryId: number;
+  title: string;
+  message: string;
+  effectiveAt: Date;
+  isUpdate: boolean;
+}) {
+  const prefix = input.isUpdate ? 'Lịch học vụ đã cập nhật' : 'Lịch học vụ mới';
+  const jobs: Array<Promise<unknown>> = [];
+  if (input.classroomId) {
+    const [students, guardians] = await Promise.all([
+      findClassroomStudentUserIdsAtDate(input.classroomId, input.effectiveAt),
+      findClassroomGuardianUserIdsAtDate(input.classroomId, input.effectiveAt),
+    ]);
+    if (students.length) {
+      jobs.push(createNotificationRecord({
+        title: `${prefix}: ${input.title}`,
+        message: input.message,
+        type: 'timetable',
+        target_role: 'student',
+        classroom_id: input.classroomId,
+        related_url: `/student/academic-calendar?entry=${input.entryId}`,
+      }, input.createdByUserId, students));
+    }
+    if (guardians.length) {
+      jobs.push(createNotificationRecord({
+        title: `${prefix}: ${input.title}`,
+        message: input.message,
+        type: 'timetable',
+        target_role: 'guardian',
+        classroom_id: input.classroomId,
+        related_url: '/parent/academic-calendar',
+      }, input.createdByUserId, guardians));
+    }
+  } else {
+    for (const role of ['teacher', 'student', 'guardian'] as const) {
+      const recipients = await findRecipientUserIds(role);
+      if (recipients.length) {
+        jobs.push(createNotificationRecord({
+          title: `${prefix}: ${input.title}`,
+          message: input.message,
+          type: 'timetable',
+          target_role: role,
+          related_url: role === 'teacher' ? '/teacher/academic-calendar' : role === 'student' ? '/student/academic-calendar' : '/parent/academic-calendar',
+        }, input.createdByUserId, recipients));
+      }
+    }
+  }
+  if (input.teacherUserId && input.teacherUserId !== input.createdByUserId) {
+    jobs.push(createNotificationRecord({
+      title: `${prefix}: ${input.title}`,
+      message: input.message,
+      type: 'timetable',
+      target_role: 'teacher',
+      classroom_id: input.classroomId,
+      related_url: `/teacher/academic-calendar?entry=${input.entryId}`,
+    }, input.createdByUserId, [input.teacherUserId]));
+  }
+  await Promise.all(jobs);
+}
+
+export async function createScheduleOverrideNotifications(input: {
+  classroomId: number;
+  overrideId: number;
+  date: string;
+  createdByUserId: number;
+  title: string;
+  message: string;
+}) {
+  // Use midday so PostgreSQL date casts cannot move a Vietnam calendar date
+  // to the previous UTC day when the local date is midnight.
+  const effectiveDate = new Date(`${input.date}T12:00:00+07:00`);
+  const [students, guardians] = await Promise.all([
+    findClassroomStudentUserIdsAtDate(input.classroomId, effectiveDate),
+    findClassroomGuardianUserIdsAtDate(input.classroomId, effectiveDate),
+  ]);
+  const jobs: Array<Promise<unknown>> = [];
+  if (students.length) {
+    jobs.push(createNotificationRecord({
+      title: input.title,
+      message: input.message,
+      type: 'timetable',
+      target_role: 'student',
+      classroom_id: input.classroomId,
+      related_url: `/student/classes/${input.classroomId}?tab=timetable&date=${input.date}`,
+    }, input.createdByUserId, students));
+  }
+  if (guardians.length) {
+    jobs.push(createNotificationRecord({
+      title: input.title,
+      message: input.message,
+      type: 'timetable',
+      target_role: 'guardian',
+      classroom_id: input.classroomId,
+      related_url: '/parent/academic-calendar',
+    }, input.createdByUserId, guardians));
+  }
+  await Promise.all(jobs);
 }

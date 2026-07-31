@@ -3,6 +3,7 @@ import type {
   StudentAttendanceRecord,
 } from './attendance';
 import type { StudentTranscript } from './transcript';
+import type { Timetable } from './classroom';
 
 export type GuardianLinkStatus = 'pending' | 'verified' | 'revoked';
 
@@ -50,4 +51,5 @@ export type GuardianStudentSummary = {
     data: StudentAttendanceRecord[];
     summary: AttendanceSummary;
   };
+  timetable: Timetable | null;
 };

@@ -18,8 +18,9 @@
 | 2 | `phase-2-backend-stabilization/` | Ổn định & cải tiến backend | 6 |
 | 3 | `phase-3-frontend-stabilization/` | Ổn định & cải tiến frontend | 5 |
 | 4 | `phase-4-feature-completion/` | Hoàn thiện & thêm features | 8 |
-| 5 | `phase-5-academic-operations/` | Nghiệp vụ học vụ/SIS cốt lõi | 14 |
+| 5 | `phase-5-academic-operations/` | Nghiệp vụ học vụ/SIS cốt lõi | 22 |
 | 6 | `phase-6-production-prep/` | Security, vận hành & deploy production | 8 |
+| 7 | `phase-7-school-extensions/` | Mở rộng portal theo quyết định sản phẩm | 4 |
 
 ---
 
@@ -85,6 +86,14 @@
 - [x] [5.12 — Parent & Guardian Portal](phase-5-academic-operations/5.12-parent-guardian-portal.md)
 - [x] [5.13 — Student Requests & School Forms](phase-5-academic-operations/5.13-student-requests-forms.md)
 - [x] [5.14 — Academic Import/Export & Reports](phase-5-academic-operations/5.14-academic-import-export-reports.md)
+- [x] [5.15 — Timetable Integrity, Shifts & Conflict Engine](phase-5-academic-operations/5.15-timetable-integrity-shifts-conflicts.md) **P0**
+- [x] [5.16 — Student Grade Subject Exploration](phase-5-academic-operations/5.16-student-grade-subject-exploration.md) **P0**
+- [x] [5.17 — Exam Schedule & Academic Calendar](phase-5-academic-operations/5.17-exam-schedule-academic-calendar.md)
+- [x] [5.18 — Substitute Teaching & Daily Schedule Overrides](phase-5-academic-operations/5.18-substitution-daily-schedule-overrides.md)
+- [ ] [5.19 — Homework Submission & Feedback Completion](phase-5-academic-operations/5.19-homework-submission-feedback-completion.md)
+- [ ] [5.20 — Family Communication & Acknowledgements](phase-5-academic-operations/5.20-family-communication-acknowledgements.md)
+- [ ] [5.21 — Teaching Plans & Department Approval](phase-5-academic-operations/5.21-teaching-plans-department-approval.md)
+- [ ] [5.22 — Digital Class Journal](phase-5-academic-operations/5.22-digital-class-journal.md)
 
 ## Phase 6 — Production Preparation
 
@@ -96,6 +105,16 @@
 - [ ] [6.6 — Observability & Operations](phase-6-production-prep/6.6-observability-operations.md)
 - [ ] [6.7 — Load & Performance Test](phase-6-production-prep/6.7-load-performance-test.md)
 - [ ] [6.8 — Domain, SSL & Production Release](phase-6-production-prep/6.8-domain-ssl-release.md)
+
+## Phase 7 — School Extensions (CHỈ SAU KHI CHỐT PHẠM VI)
+
+> Phase này chỉ triển khai sau khi các workflow P0 của Phase 5 hoàn thành. Mỗi task cần quyết định
+> sản phẩm, privacy và nguồn lực vận hành của nhà trường trước khi code.
+
+- [ ] [7.1 — Student Health & Support Records](phase-7-school-extensions/7.1-student-health-support.md)
+- [ ] [7.2 — Online Admissions](phase-7-school-extensions/7.2-online-admissions.md)
+- [ ] [7.3 — Fees, Receipts & Reconciliation](phase-7-school-extensions/7.3-fees-payments-reconciliation.md)
+- [ ] [7.4 — Data Interoperability & Governance](phase-7-school-extensions/7.4-data-interoperability-governance.md)
 
 ---
 
@@ -128,12 +147,29 @@
 12. **SQL runtime:** Query nghiệp vụ chỉ đặt trong `*.repository.ts` và phải
     parameterized; controller/service không viết SQL. DDL/seed chỉ đặt trong
     `database/postgresql/migrations` và `database/postgresql/seeds`.
+13. **Domain invariant:** Rule không trùng giáo viên/lớp/phòng, enrollment duy
+    nhất, assignment đúng scope và publish/lock phải được bảo vệ ở backend;
+    không dựa riêng vào trạng thái disabled hoặc validation frontend.
+14. **Không hardcode:** Ca học, số tiết, số cột TX, năm học, học kỳ, môn và công
+    thức phải lấy từ cấu hình/source of truth. Dữ liệu mẫu không được trở thành
+    business rule.
+15. **Fixture hợp lệ:** Seed/demo phải đi qua validation hoặc có automated
+    invariant check. Không chấp nhận fixture một giáo viên dạy nhiều lớp cùng
+    slot chỉ để màn hình có dữ liệu.
+16. **Conflict test:** Task scheduling, assignment, enrollment và grade workflow
+    phải có ít nhất một automated conflict test cùng thông báo lỗi có thể hành
+    động được.
+17. **Thời gian:** Dữ liệu lịch phải xác định timezone, ngày hiệu lực, ca và
+    period; không dùng riêng `lesson_index` khi hệ thống có nhiều ca.
+18. **Product gate:** Dữ liệu y tế, tuyển sinh và tài chính chỉ được triển khai
+    sau khi chốt privacy, retention, quyền vận hành và owner nghiệp vụ.
 
 ---
 
-> Cập nhật lần cuối: 2026-07-31
-> Trạng thái: **Task 6.3 chờ deploy runners; Task 6.4 source/local gates pass,
-> chờ environment secret thật**
+> Cập nhật lần cuối: 2026-08-01
+> Trạng thái: **Task tiếp theo là 5.19. Task 6.3 chờ
+> deploy runners; Task 6.4 source/local gates pass, chờ environment secret thật.**
 >
-> Production deployment chỉ bắt đầu sau khi đã chốt rõ phạm vi Phase 5. Nếu
-> deploy sớm bản CMS/classroom hiện tại, phải ghi rõ đó chưa phải SIS hoàn chỉnh.
+> Không gọi bản hiện tại là SIS production-ready trước khi các workflow Phase 5
+> thuộc phạm vi rollout và production gate còn lại hoàn thành. Phase 7 là
+> roadmap mở rộng, không phải điều kiện bắt buộc cho rollout SIS cốt lõi.

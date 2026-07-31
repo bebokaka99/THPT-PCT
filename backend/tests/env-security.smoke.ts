@@ -91,6 +91,17 @@ assert.equal(
   `Production should accept a safe environment: ${secureResult.stderr}`,
 );
 
+const loopbackHttpResult = loadAppWithEnv({
+  APP_PUBLIC_URL: 'http://127.0.0.1:18080',
+  CORS_ORIGINS: 'http://127.0.0.1:18080',
+  COOKIE_SECURE: 'false',
+});
+assert.equal(
+  loopbackHttpResult.status,
+  0,
+  `Production build should support local loopback HTTP: ${loopbackHttpResult.stderr}`,
+);
+
 const previousToken = jwt.sign({ userId: 42 }, previousSecret, {
   expiresIn: '5m',
 });

@@ -70,8 +70,14 @@ export async function updateMyProfile(user: AuthUser, input: UpdateMyProfileInpu
     if (!current) throw new HttpError(404, 'Student profile has not been set up');
     const profile = await updateMyStudentProfile(user.id, {
       phone: input.phone === undefined ? current.phone : input.phone,
+      parent_name:
+        input.parent_name === undefined ? current.parent_name : input.parent_name,
       parent_phone:
         input.parent_phone === undefined ? current.parent_phone : input.parent_phone,
+      permanent_address:
+        input.permanent_address === undefined
+          ? current.permanent_address
+          : input.permanent_address,
       avatar_url: input.avatar_url === undefined ? current.avatar_url : input.avatar_url,
     });
     return { user: basicUser(user), profileType: 'student' as const, profile };

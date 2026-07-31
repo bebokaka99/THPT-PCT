@@ -1,5 +1,63 @@
 # Workflow Report
 
+## 2026-08-01 - Task 5.18 Substitute Teaching & Daily Schedule Overrides
+
+- Thêm PostgreSQL migrations `040_create_daily_schedule_overrides.sql` và
+  `041_allow_daily_schedule_override_audit_cleanup.sql`, cùng seed quyền
+  `timetable_overrides.manage/propose/read`.
+- Thêm API `/api/schedule-overrides` cho proposal, publish, archive, audit,
+  lịch lớp trong ngày và lịch dạy cá nhân sau override.
+- Teacher chỉ đề xuất trong lớp/tiết có assignment của mình; admin kiểm tra và
+  công bố. Student chỉ nhận dữ liệu published trong lớp được enrollment.
+- Thêm UI `/admin/schedule-overrides`, panel lịch trong ngày và form đề xuất trong
+  tab timetable của teacher/student classroom.
+- Notification gửi sau publish cho student và guardian hợp lệ; draft/proposal không gửi.
+- Hoàn thiện selector proposal: teacher chọn giáo viên thay thế theo tên từ đúng
+  assignment lớp/môn/học kỳ; ca và tiết lấy từ school shift/bell period đang hoạt động,
+  không còn nhập ID kỹ thuật thủ công.
+- Parent Academic Calendar hiển thị lịch hiệu lực theo ngày của từng học sinh đã
+  xác minh. Backend từ chối guardian truy cập student không có verified link.
+- Thêm API options và guardian daily schedule; smoke test bao phủ candidate filtering,
+  guardian isolation và lịch sau publish.
+- Backend/frontend build, migration/seed Docker và smoke test override: pass.
+- Task tiếp theo: **5.19 - Homework Submission & Feedback Completion**.
+
+## 2026-08-01 - Task 5.17 Exam Schedule & Academic Calendar
+
+- Thêm migration `037` cho lịch học vụ/audit, `038` cho cleanup audit có kiểm
+  soát và `039` cho DB guard conflict khi publish; seed quyền
+  `academic_calendar.*` và hai lịch toàn trường mẫu.
+- Backend `/api/academic-calendar` hỗ trợ list/detail, create proposal/draft,
+  update, conflict preview, publish, archive, delete draft và audit.
+- Teacher bị giới hạn theo teaching assignment; student theo enrollment;
+  guardian theo verified link; non-admin chỉ đọc lịch published đúng phạm vi.
+- Publish/update gửi notification; draft/proposal không gửi.
+- Conflict engine kiểm tra lớp, giáo viên và phòng với lịch học vụ và timetable
+  published, dùng timezone `Asia/Ho_Chi_Minh`.
+- Thêm UI lịch học vụ cho admin, teacher, student và parent, gồm list/calendar,
+  filter, print và export ICS.
+- Migration/seed PostgreSQL Docker, backend build, frontend build và smoke test
+  scope/conflict/notification/audit: pass.
+- Task tiếp theo: **5.18 - Substitute Teaching & Daily Schedule Overrides**.
+
+## 2026-08-01 - Portal gap review and workflow expansion
+
+- Không sửa source code hoặc database trong bước này.
+- Bổ sung P0 Task 5.15 về ca học, version thời khóa biểu và conflict giáo viên,
+  lớp, phòng.
+- Bổ sung P0 Task 5.16 về lọc điểm theo năm, học kỳ, môn và chi tiết môn với số
+  cột TX động.
+- Bổ sung Task 5.17-5.22 cho lịch thi, dạy thay, bài nộp/phản hồi, truyền thông
+  phụ huynh, kế hoạch bài dạy và sổ đầu bài điện tử.
+- Bổ sung Phase 7 cho y tế học đường, tuyển sinh, khoản thu và liên thông dữ liệu;
+  các task này cần product/privacy gate trước khi code.
+- Chuẩn hóa `WORKFLOW.md`, `ACADEMIC-SCOPE.md`, `TASK-TEMPLATE.md`, requirements,
+  database/API design và tài liệu assignment/gradebook.
+- Rule mới bắt buộc conflict test, fixture hợp lệ, không hardcode ca/số tiết/số
+  cột TX và không đánh dấu hoàn thành chỉ vì build pass.
+- Kiểm tra Markdown links, task numbering, mojibake và whitespace: pass.
+- Task triển khai tiếp theo: **5.15 - Timetable Integrity, Shifts & Conflict Engine**.
+
 > Đây là log lịch sử append-only. Các phần cũ có thể mô tả MySQL; từ `P0-DB`
 > trở đi PostgreSQL là database canonical và không dùng lại hướng dẫn MySQL/XAMPP.
 
@@ -1936,3 +1994,54 @@ chỉ chuyển sang completed sau khi chạy được các external gates nêu t
   immutable container images; source/bundle/image secret gates đều pass.
 - Chỉ cấu hình `DEPLOY_ENV_B64` thật khi có staging/production target; không dùng
   local development credential hoặc secret giả để đóng checklist.
+
+## Task 5.15 - Timetable Integrity, Shifts & Conflict Engine
+
+### Đã triển khai
+
+- Thêm ca học và giờ từng tiết có thể cấu hình, mặc định ca sáng/ca chiều mỗi ca 5 tiết.
+- Thêm draft/published/archived, version và người publish cho thời khóa biểu.
+- Mỗi tiết được ràng buộc vào teaching assignment và giáo viên thực tế.
+- Conflict engine chặn trùng lớp, giáo viên và phòng theo học kỳ, thứ, ca và tiết.
+- Student/guardian chỉ nhận timetable published; teacher chỉ nhận lịch dạy của mình.
+- Thêm UI admin cấu hình ca/tiết, conflict preview và publish/archive timetable.
+- Sửa fixture demo cho 12A1, 11A2, 10A3 không còn trùng lịch.
+
+### Tự kiểm tra
+
+- Migration/seed trên database rỗng: pass.
+- `npm run quality` backend: pass.
+- `npm run build` frontend: pass.
+- `npm run test:timetable-integrity`: pass.
+- Docker frontend/backend/PostgreSQL health và login admin: pass.
+
+### Giới hạn
+
+- Chưa có xếp lịch tự động, tuần A/B, dạy thay và override theo ngày.
+- Task kế tiếp bắt buộc: 5.16 - Student Grade Subject Exploration.
+
+## Task 5.16 - Student Grade Subject Exploration
+
+### Đã triển khai
+
+- API điểm học sinh lọc trực tiếp theo năm học, học kỳ và môn học.
+- Response bổ sung ID học vụ và metadata filter nhẹ, không tải scorebook ngoài phạm vi.
+- Thêm API điểm cho guardian với kiểm tra liên kết học sinh đã xác minh.
+- Trang bảng điểm học sinh lưu bộ lọc trong URL và có chế độ chi tiết từng môn.
+- Trang phụ huynh có cùng bộ lọc và chi tiết điểm thành phần của linked child.
+- Component kết quả responsive hiển thị toàn bộ số cột TX động cùng trạng thái
+  đã chấm, vắng, miễn và chưa chấm.
+
+### Tự kiểm tra
+
+- Backend full `npm run quality`: pass.
+- Frontend `npm run build`: pass.
+- Smoke test 4 cột TX, filters, draft visibility và guardian RBAC: pass.
+- Docker rebuild/health: pass.
+- Runtime học sinh demo: 3 môn; lọc Toán còn 1 môn, 5 cột điểm, tổng kết 7,8.
+- Runtime guardian demo: linked child có 3 môn; child không liên kết bị từ chối.
+
+### Giới hạn
+
+- Chưa có biểu đồ tiến bộ, so sánh nhiều học kỳ hoặc workflow khiếu nại điểm.
+- Task kế tiếp: 5.17 - Exam Schedule & Academic Calendar.

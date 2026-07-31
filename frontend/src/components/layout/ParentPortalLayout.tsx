@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Bell, Home, ShieldCheck } from 'lucide-react';
+import { Bell, CalendarDays, Home, ShieldCheck } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../stores/auth-context';
 import { MainLayout } from './MainLayout';
@@ -7,6 +7,7 @@ import { MainLayout } from './MainLayout';
 const navigation = [
   { label: 'Tổng quan', to: '/parent', end: true, icon: Home },
   { label: 'Thông báo', to: '/notifications', end: false, icon: Bell },
+  { label: 'Lịch học vụ', to: '/parent/academic-calendar', end: false, icon: CalendarDays },
 ];
 
 export function ParentPortalLayout({ children }: { children: ReactNode }) {

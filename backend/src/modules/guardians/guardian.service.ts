@@ -2,6 +2,7 @@ import type { AuthUser } from '../auth/auth.types.js';
 import { findStudentAttendance } from '../attendance/attendance.repository.js';
 import { getAuthorizedStudentTranscript } from '../transcripts/transcript.service.js';
 import { HttpError } from '../../utils/http-error.js';
+import { findPublishedTimetableByClassroomId } from '../timetables/timetable.repository.js';
 import {
   findGuardianLinkAudits,
   findGuardianLinkById,
@@ -144,8 +145,11 @@ export async function getGuardianStudentSummary(
   const attendance = await findStudentAttendance(studentUserId, {
     semesterId: resolvedSemesterId,
   });
+  const timetable = child.classroom_id
+    ? await findPublishedTimetableByClassroomId(child.classroom_id)
+    : null;
   await insertGuardianAccessAudit(user.id, studentUserId, resolvedSemesterId);
-  return { child, transcript, attendance };
+  return { child, transcript, attendance, timetable };
 }
 
 export function getMyGuardianPreferences(user: AuthUser) {

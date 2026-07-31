@@ -23,6 +23,16 @@ const AdminAcademicOperationsPage = lazy(() =>
     default: module.AdminAcademicOperationsPage,
   })),
 );
+const AdminAcademicCalendarPage = lazy(() =>
+  import('../pages/admin/AdminAcademicCalendarPage').then((module) => ({
+    default: module.AdminAcademicCalendarPage,
+  })),
+);
+const AdminScheduleOverridesPage = lazy(() =>
+  import('../pages/admin/AdminScheduleOverridesPage').then((module) => ({
+    default: module.AdminScheduleOverridesPage,
+  })),
+);
 const AdminSubjectsPage = lazy(() =>
   import('../pages/admin/AdminSubjectsPage').then((module) => ({
     default: module.AdminSubjectsPage,
@@ -100,6 +110,11 @@ const AdminClassroomsPage = lazy(() =>
     default: module.AdminClassroomsPage,
   })),
 );
+const AdminTimetableSettingsPage = lazy(() =>
+  import('../pages/admin/AdminTimetableSettingsPage').then((module) => ({
+    default: module.AdminTimetableSettingsPage,
+  })),
+);
 const AdminDashboardPage = lazy(() =>
   import('../pages/admin/AdminDashboardPage').then((module) => ({
     default: module.AdminDashboardPage,
@@ -175,6 +190,16 @@ const StudentAttendancePage = lazy(() =>
     default: module.StudentAttendancePage,
   })),
 );
+const StudentTimetablePage = lazy(() =>
+  import('../pages/student/StudentTimetablePage').then((module) => ({
+    default: module.StudentTimetablePage,
+  })),
+);
+const StudentAcademicCalendarPage = lazy(() =>
+  import('../pages/student/StudentAcademicCalendarPage').then((module) => ({
+    default: module.StudentAcademicCalendarPage,
+  })),
+);
 const StudentAssignmentsPage = lazy(() =>
   import('../pages/student/StudentAssignmentsPage').then((module) => ({
     default: module.StudentAssignmentsPage,
@@ -218,6 +243,16 @@ const TeacherClassDetailPage = lazy(() =>
 const TeacherTeachingAssignmentsPage = lazy(() =>
   import('../pages/teacher/TeacherTeachingAssignmentsPage').then((module) => ({
     default: module.TeacherTeachingAssignmentsPage,
+  })),
+);
+const TeacherTimetablePage = lazy(() =>
+  import('../pages/teacher/TeacherTimetablePage').then((module) => ({
+    default: module.TeacherTimetablePage,
+  })),
+);
+const TeacherAcademicCalendarPage = lazy(() =>
+  import('../pages/teacher/TeacherAcademicCalendarPage').then((module) => ({
+    default: module.TeacherAcademicCalendarPage,
   })),
 );
 const TeacherAssessmentConfigurationsPage = lazy(() =>
@@ -280,6 +315,11 @@ const ParentDashboardPage = lazy(() =>
 const ParentStudentPage = lazy(() =>
   import('../pages/parent/ParentStudentPage').then((module) => ({
     default: module.ParentStudentPage,
+  })),
+);
+const ParentAcademicCalendarPage = lazy(() =>
+  import('../pages/parent/ParentAcademicCalendarPage').then((module) => ({
+    default: module.ParentAcademicCalendarPage,
   })),
 );
 
@@ -349,6 +389,13 @@ export function AppRoutes() {
             element={protectedAdminPage(
               <AdminAcademicOperationsPage />,
               'academic_imports.manage',
+            )}
+          />
+          <Route
+            path="/admin/academic-calendar"
+            element={protectedAdminPage(
+              <AdminAcademicCalendarPage />,
+              'academic_calendar.manage',
             )}
           />
           <Route
@@ -458,6 +505,14 @@ export function AppRoutes() {
             element={protectedAdminPage(<AdminClassroomFormPage />, 'classrooms.manage')}
           />
           <Route
+            path="/admin/timetable-settings"
+            element={protectedAdminPage(<AdminTimetableSettingsPage />, 'classrooms.manage')}
+          />
+          <Route
+            path="/admin/schedule-overrides"
+            element={protectedAdminPage(<AdminScheduleOverridesPage />, 'timetable_overrides.manage')}
+          />
+          <Route
             path="/admin/documents"
             element={protectedAdminPage(<AdminDocumentsPage />, 'documents.manage')}
           />
@@ -520,6 +575,20 @@ export function AppRoutes() {
           <Route
             path="/teacher/teaching-assignments"
             element={protectedRolePage(<TeacherTeachingAssignmentsPage />, [
+              'teacher',
+              'admin',
+            ])}
+          />
+          <Route
+            path="/teacher/timetable"
+            element={protectedRolePage(<TeacherTimetablePage />, [
+              'teacher',
+              'admin',
+            ])}
+          />
+          <Route
+            path="/teacher/academic-calendar"
+            element={protectedRolePage(<TeacherAcademicCalendarPage />, [
               'teacher',
               'admin',
             ])}
@@ -593,6 +662,20 @@ export function AppRoutes() {
             ])}
           />
           <Route
+            path="/student/timetable"
+            element={protectedRolePage(<StudentTimetablePage />, [
+              'student',
+              'admin',
+            ])}
+          />
+          <Route
+            path="/student/academic-calendar"
+            element={protectedRolePage(<StudentAcademicCalendarPage />, [
+              'student',
+              'admin',
+            ])}
+          />
+          <Route
             path="/student/attendance"
             element={protectedRolePage(<StudentAttendancePage />, [
               'student',
@@ -637,6 +720,12 @@ export function AppRoutes() {
           <Route
             path="/parent/students/:id"
             element={protectedRolePage(<ParentStudentPage />, [
+              'guardian',
+            ])}
+          />
+          <Route
+            path="/parent/academic-calendar"
+            element={protectedRolePage(<ParentAcademicCalendarPage />, [
               'guardian',
             ])}
           />

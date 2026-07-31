@@ -13,6 +13,7 @@ import type {
   GradebookScoreBatchInput,
   GradebookStatus,
   GradeScoreState,
+  StudentGradeQuery,
 } from './gradebook.types.js';
 
 const states: GradeScoreState[] = ['scored', 'absent', 'exempt'];
@@ -71,6 +72,25 @@ export function validateGradebookListQuery(
       'semester_id',
     ),
     status: rawStatus as GradebookStatus | undefined,
+  };
+}
+
+export function validateStudentGradeQuery(
+  query: Record<string, unknown>,
+): StudentGradeQuery {
+  return {
+    academic_year_id: positiveIntegerValue(
+      firstQueryValue(query.academic_year_id),
+      'academic_year_id',
+    ),
+    semester_id: positiveIntegerValue(
+      firstQueryValue(query.semester_id),
+      'semester_id',
+    ),
+    subject_id: positiveIntegerValue(
+      firstQueryValue(query.subject_id),
+      'subject_id',
+    ),
   };
 }
 
