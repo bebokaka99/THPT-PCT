@@ -5,7 +5,8 @@ import type {
   GradebookStatus,
   GradebookSummary,
   GradebookWorkflowAudit,
-  StudentPublishedGrade,
+  StudentGradeQuery,
+  StudentPublishedGradesResponse,
 } from '../types/gradebook';
 import type {
   ApiDataResponse,
@@ -56,10 +57,22 @@ export function saveGradebookScores(
   );
 }
 
-export function getMyGrades(token: string) {
-  return apiClient.get<ApiListResponse<StudentPublishedGrade>>('/gradebooks/me', {
+export function getMyGrades(token: string, query: StudentGradeQuery = {}) {
+  return apiClient.get<StudentPublishedGradesResponse>('/gradebooks/me', {
     headers: authHeaders(token),
+    params: query,
   });
+}
+
+export function getGuardianStudentGrades(
+  token: string,
+  studentId: number,
+  query: StudentGradeQuery = {},
+) {
+  return apiClient.get<StudentPublishedGradesResponse>(
+    `/gradebooks/students/${studentId}`,
+    { headers: authHeaders(token), params: query },
+  );
 }
 
 function workflowAction(

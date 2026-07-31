@@ -9,6 +9,7 @@ import {
   listGradebookChangeRequests,
   listGradebooks,
   listGradebookWorkflowAudits,
+  listGuardianStudentPublishedGrades,
   listMyPublishedGrades,
   lockGradebook,
   rejectGradebook,
@@ -21,6 +22,7 @@ import {
   validateGradebookId,
   validateGradebookListQuery,
   validateGradebookScoreBatch,
+  validateStudentGradeQuery,
   validateOptionalWorkflowReason,
   validateRequiredWorkflowReason,
 } from './gradebook.validation.js';
@@ -173,7 +175,27 @@ export const listMyGradesController: RequestHandler = async (
   next,
 ) => {
   try {
-    res.json(await listMyPublishedGrades(user(req)));
+    res.json(
+      await listMyPublishedGrades(user(req), validateStudentGradeQuery(req.query)),
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listGuardianStudentGradesController: RequestHandler = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    res.json(
+      await listGuardianStudentPublishedGrades(
+        user(req),
+        validateGradebookId(req.params.studentId),
+        validateStudentGradeQuery(req.query),
+      ),
+    );
   } catch (error) {
     next(error);
   }

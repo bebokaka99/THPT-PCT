@@ -49,7 +49,7 @@ Tài liệu này là ma trận chức năng theo vai trò. Ký hiệu:
 | Chuyên cần, bài tập, điểm, phiếu kết quả | Done | 5.6-5.10 |
 | Hạnh kiểm, đơn/yêu cầu, hồ sơ | Done | 5.11-5.13 |
 | Thời khóa biểu lớp theo ca | Done | 5.15 |
-| Lọc điểm theo năm/học kỳ/môn và xem chi tiết môn | Polish | 5.16 |
+| Lọc điểm theo năm/học kỳ/môn và xem chi tiết môn | Done | 5.16 |
 | Lịch kiểm tra/thi và lịch học bù | Planned | 5.17 |
 | Nộp bài và xem phản hồi giáo viên | Polish | 5.19 |
 | Thông báo bắt buộc và xác nhận đã đọc | Planned | 5.20 |
@@ -60,6 +60,7 @@ Tài liệu này là ma trận chức năng theo vai trò. Ký hiệu:
 |---|---|---|
 | Chọn học sinh được liên kết | Done | 5.12 |
 | Xem chuyên cần, điểm, hạnh kiểm | Done | 5.12 |
+| Xem điểm thành phần theo năm/học kỳ/môn | Done | 5.16 |
 | Đơn nghỉ phép | Polish | 5.13, 5.20 |
 | Lịch học published | Done | 5.15 |
 | Lịch kiểm tra | Planned | 5.17 |

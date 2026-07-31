@@ -8,6 +8,7 @@ import {
   createGradebookController,
   getGradebookController,
   listGradebookAuditsController,
+  listGuardianStudentGradesController,
   listChangeRequestsController,
   listGradebooksController,
   listMyGradesController,
@@ -23,6 +24,11 @@ export const gradebookRoutes = Router();
 
 gradebookRoutes.use(requireAuth);
 gradebookRoutes.get('/me', requirePermission('gradebooks.read'), listMyGradesController);
+gradebookRoutes.get(
+  '/students/:studentId',
+  requirePermission('guardian.children.read'),
+  listGuardianStudentGradesController,
+);
 gradebookRoutes.get(
   '/change-requests',
   requirePermission('gradebooks.review'),

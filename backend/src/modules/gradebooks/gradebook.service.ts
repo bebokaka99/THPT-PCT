@@ -2,6 +2,7 @@ import type { AuthUser } from '../auth/auth.types.js';
 import { assertSemesterWritable } from '../academic-periods/academic-period.service.js';
 import { HttpError } from '../../utils/http-error.js';
 import { createGradebookWorkflowNotification } from '../notifications/notification.service.js';
+import { findVerifiedGuardianChild } from '../guardians/guardian.repository.js';
 import {
   createGradebookChangeRequestRecord,
   findGradebookChangeRequests,
@@ -11,6 +12,7 @@ import {
   findGradebooks,
   findGradebookSummaryById,
   findGradebookWorkflowAudits,
+  findPublishedGradeFilterOptionsForStudent,
   findPublishedGradesForStudent,
   insertGradebook,
   reviewGradebookChangeRequestRecord,
@@ -23,6 +25,7 @@ import type {
   GradebookCreateInput,
   GradebookListQuery,
   GradebookScoreBatchInput,
+  StudentGradeQuery,
 } from './gradebook.types.js';
 
 function isAdmin(user: AuthUser) {
@@ -68,13 +71,48 @@ export async function listGradebooks(
   };
 }
 
-export async function listMyPublishedGrades(user: AuthUser) {
+async function publishedGradesForStudent(
+  studentUserId: number,
+  query: StudentGradeQuery,
+) {
+  const [data, filters] = await Promise.all([
+    findPublishedGradesForStudent(studentUserId, query),
+    findPublishedGradeFilterOptionsForStudent(studentUserId),
+  ]);
+  return { data, filters };
+}
+
+export async function listMyPublishedGrades(
+  user: AuthUser,
+  query: StudentGradeQuery,
+) {
   if (!user.roles.includes('student') && !isAdmin(user)) {
     throw new HttpError(403, 'Student role required');
   }
-  return {
-    data: isAdmin(user) ? [] : await findPublishedGradesForStudent(user.id),
-  };
+  if (isAdmin(user)) {
+    return {
+      data: [],
+      filters: { academic_years: [], semesters: [], subjects: [] },
+    };
+  }
+  return publishedGradesForStudent(user.id, query);
+}
+
+export async function listGuardianStudentPublishedGrades(
+  user: AuthUser,
+  studentUserId: number,
+  query: StudentGradeQuery,
+) {
+  if (
+    !user.roles.includes('guardian') ||
+    !user.permissions.includes('guardian.children.read')
+  ) {
+    throw new HttpError(403, 'Guardian role required');
+  }
+  if (!(await findVerifiedGuardianChild(user.id, studentUserId))) {
+    throw new HttpError(403, 'Verified guardian link required');
+  }
+  return publishedGradesForStudent(studentUserId, query);
 }
 
 export async function getGradebook(user: AuthUser, id: number) {

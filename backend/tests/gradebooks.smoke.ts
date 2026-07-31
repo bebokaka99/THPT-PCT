@@ -11,7 +11,7 @@ type DataResponse<T> = { data: T };
 async function createUser(
   email: string,
   password: string,
-  role: 'admin' | 'teacher' | 'student',
+  role: 'admin' | 'teacher' | 'student' | 'guardian',
   fullName: string,
 ) {
   const result = await postgresPool.query<{ id: number }>(
@@ -104,6 +104,14 @@ async function run() {
       'Gradebook Reviewer',
     );
     userIds.push(teacherId, outsiderId, adminId);
+    const guardianEmail = `gradebook-guardian-${suffix}@pct.local`;
+    const guardianId = await createUser(
+      guardianEmail,
+      password,
+      'guardian',
+      'Gradebook Guardian',
+    );
+    userIds.push(guardianId);
 
     const studentIds: number[] = [];
     for (let index = 0; index < 40; index += 1) {
@@ -169,6 +177,13 @@ async function run() {
         ],
       );
     }
+    await postgresPool.query(
+      `INSERT INTO student_guardian_links (
+         guardian_user_id, student_user_id, relationship, status,
+         invited_by_user_id, verified_by_user_id, verified_at
+       ) VALUES ($1, $2, 'parent', 'verified', $3, $3, CURRENT_TIMESTAMP)`,
+      [guardianId, studentIds[0], adminId],
+    );
 
     const client = await postgresPool.connect();
     try {
@@ -187,7 +202,7 @@ async function run() {
            configuration_id, code, name, weight_percent, coefficient,
            max_entries, score_scale, sort_order
          ) VALUES
-           ($1, 'REGULAR', 'Thuong xuyen', 60, 1, 2, 10, 1),
+           ($1, 'REGULAR', 'Thuong xuyen', 60, 1, 4, 10, 1),
            ($1, 'FINAL', 'Cuoi ky', 40, 1, 1, 10, 2)`,
         [configurationId],
       );
@@ -215,6 +230,7 @@ async function run() {
       `gradebook-student-0-${suffix}@pct.local`,
       password,
     );
+    const guardian = await login(baseUrl, guardianEmail, password);
     const headers = (token: string) => ({
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -236,13 +252,17 @@ async function run() {
     const created = (
       (await createResponse.json()) as DataResponse<{
         id: number;
-        columns: Array<{ id: number }>;
+        columns: Array<{ id: number; category_code: string }>;
         students: Array<{ user_id: number }>;
       }>
     ).data;
     gradebookId = created.id;
-    assert.equal(created.columns.length, 3);
+    assert.equal(created.columns.length, 5);
     assert.equal(created.students.length, 40);
+    const finalColumn = created.columns.find(
+      (column) => column.category_code === 'FINAL',
+    );
+    assert.ok(finalColumn, 'Final assessment column is required');
 
     const entries = studentIds.flatMap((studentId, index) => {
       const regularState =
@@ -265,7 +285,7 @@ async function run() {
         },
         {
           student_user_id: studentId,
-          column_id: created.columns[2].id,
+          column_id: finalColumn.id,
           state: 'scored',
           score: index === 0 ? '8.5' : index === 1 ? '9' : '10',
           expected_version: 0,
@@ -350,9 +370,12 @@ async function run() {
       headers: headers(student.accessToken),
     });
     assert.equal(studentDrafts.status, 200);
-    assert.deepEqual((await studentDrafts.json()) as { data: unknown[] }, {
-      data: [],
-    });
+    const studentDraftBody = (await studentDrafts.json()) as {
+      data: unknown[];
+      filters: { academic_years: unknown[]; semesters: unknown[]; subjects: unknown[] };
+    };
+    assert.deepEqual(studentDraftBody.data, []);
+    assert.deepEqual(studentDraftBody.filters.subjects, []);
 
     const workflowPost = (
       token: string,
@@ -413,10 +436,67 @@ async function run() {
     });
     assert.equal(studentApproved.status, 200);
     const studentApprovedBody = (await studentApproved.json()) as {
-      data: Array<{ id: number; status: string }>;
+      data: Array<{
+        id: number;
+        status: string;
+        academic_year_id: number;
+        semester_id: number;
+        subject_id: number;
+        scores: unknown[];
+      }>;
+      filters: {
+        academic_years: unknown[];
+        semesters: unknown[];
+        subjects: unknown[];
+      };
     };
     assert.equal(studentApprovedBody.data.length, 1);
     assert.equal(studentApprovedBody.data[0].status, 'approved');
+    assert.equal(studentApprovedBody.data[0].academic_year_id, academicYearId);
+    assert.equal(studentApprovedBody.data[0].semester_id, semesterId);
+    assert.equal(studentApprovedBody.data[0].subject_id, subjectId);
+    assert.equal(studentApprovedBody.data[0].scores.length, 5);
+    assert.equal(studentApprovedBody.filters.subjects.length, 1);
+
+    const filteredGrades = await fetch(
+      `${baseUrl}/gradebooks/me?academic_year_id=${academicYearId}&semester_id=${semesterId}&subject_id=${subjectId}`,
+      { headers: headers(student.accessToken) },
+    );
+    assert.equal(filteredGrades.status, 200);
+    assert.equal(
+      ((await filteredGrades.json()) as { data: unknown[] }).data.length,
+      1,
+    );
+
+    const unrelatedSubject = await fetch(
+      `${baseUrl}/gradebooks/me?subject_id=${subjectId + 1000000}`,
+      { headers: headers(student.accessToken) },
+    );
+    assert.equal(unrelatedSubject.status, 200);
+    assert.deepEqual(
+      ((await unrelatedSubject.json()) as { data: unknown[] }).data,
+      [],
+    );
+
+    const invalidFilter = await fetch(`${baseUrl}/gradebooks/me?subject_id=0`, {
+      headers: headers(student.accessToken),
+    });
+    assert.equal(invalidFilter.status, 400);
+
+    const guardianGrades = await fetch(
+      `${baseUrl}/gradebooks/students/${studentIds[0]}?subject_id=${subjectId}`,
+      { headers: headers(guardian.accessToken) },
+    );
+    assert.equal(guardianGrades.status, 200);
+    assert.equal(
+      ((await guardianGrades.json()) as { data: unknown[] }).data.length,
+      1,
+    );
+    const unrelatedGuardianGrades = await fetch(
+      `${baseUrl}/gradebooks/students/${studentIds[1]}`,
+      { headers: headers(guardian.accessToken) },
+    );
+    assert.equal(unrelatedGuardianGrades.status, 403);
 
     const liveTranscript = await fetch(
       `${baseUrl}/transcripts/me?semester_id=${semesterId}`,

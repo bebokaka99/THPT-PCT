@@ -11,6 +11,7 @@ export type GradebookSummary = {
   subject_name: string;
   semester_id: number;
   semester_name: string;
+  academic_year_id: number;
   academic_year_name: string;
   teacher_user_id: number;
   teacher_name: string;
@@ -127,7 +128,9 @@ export type GradebookWorkflowAudit = {
 export type StudentPublishedGrade = {
   id: number;
   classroom_name: string;
+  academic_year_id: number;
   semester_id: number;
+  subject_id: number;
   subject_code: string;
   subject_name: string;
   teacher_name: string;
@@ -148,4 +151,31 @@ export type StudentPublishedGrade = {
     state: GradeScoreState | 'unscored';
     score: number | null;
   }>;
+};
+
+export type StudentGradeQuery = {
+  academic_year_id?: number;
+  semester_id?: number;
+  subject_id?: number;
+};
+
+export type StudentGradeFilterOptions = {
+  academic_years: Array<{ id: number; name: string }>;
+  semesters: Array<{
+    id: number;
+    academic_year_id: number;
+    name: string;
+  }>;
+  subjects: Array<{
+    id: number;
+    code: string;
+    name: string;
+    academic_year_id: number;
+    semester_id: number;
+  }>;
+};
+
+export type StudentPublishedGradesResponse = {
+  data: StudentPublishedGrade[];
+  filters: StudentGradeFilterOptions;
 };

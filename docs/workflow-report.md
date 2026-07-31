@@ -1979,3 +1979,29 @@ chỉ chuyển sang completed sau khi chạy được các external gates nêu t
 
 - Chưa có xếp lịch tự động, tuần A/B, dạy thay và override theo ngày.
 - Task kế tiếp bắt buộc: 5.16 - Student Grade Subject Exploration.
+
+## Task 5.16 - Student Grade Subject Exploration
+
+### Đã triển khai
+
+- API điểm học sinh lọc trực tiếp theo năm học, học kỳ và môn học.
+- Response bổ sung ID học vụ và metadata filter nhẹ, không tải scorebook ngoài phạm vi.
+- Thêm API điểm cho guardian với kiểm tra liên kết học sinh đã xác minh.
+- Trang bảng điểm học sinh lưu bộ lọc trong URL và có chế độ chi tiết từng môn.
+- Trang phụ huynh có cùng bộ lọc và chi tiết điểm thành phần của linked child.
+- Component kết quả responsive hiển thị toàn bộ số cột TX động cùng trạng thái
+  đã chấm, vắng, miễn và chưa chấm.
+
+### Tự kiểm tra
+
+- Backend full `npm run quality`: pass.
+- Frontend `npm run build`: pass.
+- Smoke test 4 cột TX, filters, draft visibility và guardian RBAC: pass.
+- Docker rebuild/health: pass.
+- Runtime học sinh demo: 3 môn; lọc Toán còn 1 môn, 5 cột điểm, tổng kết 7,8.
+- Runtime guardian demo: linked child có 3 môn; child không liên kết bị từ chối.
+
+### Giới hạn
+
+- Chưa có biểu đồ tiến bộ, so sánh nhiều học kỳ hoặc workflow khiếu nại điểm.
+- Task kế tiếp: 5.17 - Exam Schedule & Academic Calendar.
