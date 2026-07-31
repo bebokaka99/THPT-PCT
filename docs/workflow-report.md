@@ -1,5 +1,22 @@
 # Workflow Report
 
+## 2026-08-01 - Task 5.21 Teaching Plans & Department Approval
+
+- Thêm migrations `044_create_teaching_plans.sql`,
+  `045_add_teaching_plan_links.sql` và seed quyền
+  `027_teaching_plan_permissions.sql`.
+- Kế hoạch gắn duy nhất với teaching assignment, có tuần học, version history,
+  audit và workflow draft/submitted/approved/rejected/archived.
+- Giáo viên chỉ quản lý assignment của mình; student bị từ chối; approved plan
+  bị khóa ở cả service và database trigger.
+- Backend thêm `/api/teaching-plans`; frontend thêm
+  `/teacher/teaching-plans` và `/admin/teaching-plans` cùng summary theo tổ môn.
+- Build backend/frontend, migration/seed PostgreSQL và smoke test RBAC/workflow:
+  pass.
+- Giới hạn: reviewer v1 là admin toàn trường; chưa có mapping tổ trưởng theo
+  subject group và chưa có UI picker cho các liên kết timetable/assignment/media.
+- Task tiếp theo: **5.22 - Digital Class Journal**.
+
 ## 2026-08-01 - Task 5.20 Family Communication & Acknowledgements
 
 - Bổ sung PostgreSQL migration `043_family_communication_acknowledgements.sql`
