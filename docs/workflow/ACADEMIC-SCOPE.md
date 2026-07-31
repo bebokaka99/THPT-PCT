@@ -1,70 +1,85 @@
-# Academic Operations — Role & Portal Scope
+# Academic Operations - Role & Portal Scope
 
-Tài liệu này là checklist phạm vi UI/API theo role. Mỗi tab chỉ được đánh dấu
-hoàn thành khi backend policy và dữ liệu thật tương ứng đã pass.
+Tài liệu này là ma trận chức năng theo vai trò. Ký hiệu:
+
+- `Done`: đã có workflow chạy được.
+- `Polish`: đã có nền móng nhưng còn task hoàn thiện.
+- `Planned`: chưa triển khai.
 
 ## Admin Portal
 
-| Tab/chức năng | Task |
-|---|---|
-| Năm học & học kỳ | 5.1 |
-| Môn học & chương trình | 5.2 |
-| Enrollment/chuyển lớp/lịch sử học sinh | 5.3 |
-| Phân công giảng dạy/chủ nhiệm | 5.4 |
-| Cấu hình đầu điểm/công thức | 5.5 |
-| Tổng hợp chuyên cần | 5.6 |
-| Theo dõi bài tập/nộp bài | 5.7 |
-| Quản trị gradebook | 5.8 |
-| Duyệt, khóa, mở điểm & audit | 5.9 |
-| Phiếu kết quả/bảng điểm | 5.10 |
-| Hạnh kiểm/rèn luyện | 5.11 |
-| Liên kết phụ huynh | 5.12 |
-| Duyệt đơn/yêu cầu | 5.13 |
-| Import/Export/Báo cáo học vụ | 5.14 |
+| Chức năng | Trạng thái | Task |
+|---|---|---|
+| Năm học, học kỳ, môn và chương trình | Done | 5.1, 5.2 |
+| Xếp lớp và lịch sử enrollment | Done | 5.3 |
+| Phân công giảng dạy/chủ nhiệm | Done | 5.4 |
+| Cấu hình đầu điểm | Done | 5.5 |
+| Chuyên cần | Done | 5.6 |
+| Bài tập, sổ điểm, duyệt và khóa điểm | Done | 5.7-5.10 |
+| Hạnh kiểm, phụ huynh, đơn học sinh | Done | 5.11-5.13 |
+| Import/export và báo cáo học vụ | Done | 5.14 |
+| Ca học, thời khóa biểu và phát hiện xung đột | Polish | 5.15 |
+| Lịch kiểm tra/thi toàn trường | Planned | 5.17 |
+| Dạy thay, đổi tiết, đổi phòng | Planned | 5.18 |
+| Truyền thông có xác nhận đã đọc | Planned | 5.20 |
+| Duyệt kế hoạch bài dạy theo tổ chuyên môn | Planned | 5.21 |
+| Theo dõi sổ đầu bài toàn trường | Planned | 5.22 |
 
 ## Teacher Portal
 
-| Tab/chức năng | Task |
-|---|---|
-| Lớp/môn được phân công | 5.4 |
-| Điểm danh | 5.6 |
-| Bài tập & trạng thái nộp | 5.7 |
-| Nhập điểm theo môn/lớp | 5.8 |
-| Gửi duyệt/xin sửa điểm | 5.9 |
-| Xem kết quả phạm vi được giao | 5.10 |
-| Sổ chủ nhiệm/nhận xét/hạnh kiểm | 5.11 |
-| Xử lý đơn theo vai trò chủ nhiệm | 5.13 |
-| Import/Export roster/gradebook | 5.14 |
+| Chức năng | Trạng thái | Task |
+|---|---|---|
+| Lớp/môn được phân công | Done | 5.4 |
+| Điểm danh, bài tập, nhập điểm | Done | 5.6-5.8 |
+| Gửi duyệt điểm, phiếu kết quả, hạnh kiểm | Done | 5.9-5.11 |
+| Xử lý đơn theo phạm vi chủ nhiệm | Done | 5.13 |
+| Lịch dạy cá nhân không trùng tiết | Polish | 5.15 |
+| Lịch kiểm tra/thi theo lớp/môn | Planned | 5.17 |
+| Báo nghỉ, dạy thay, đổi tiết/phòng | Planned | 5.18 |
+| Nhận bài, phản hồi và chấm bài nộp | Polish | 5.19 |
+| Gửi thông báo lớp/phụ huynh có theo dõi đọc | Planned | 5.20 |
+| Kế hoạch bài dạy và gửi tổ trưởng duyệt | Planned | 5.21 |
+| Ghi sổ đầu bài theo tiết thực dạy | Planned | 5.22 |
 
 ## Student Portal
 
-| Tab/chức năng | Task |
-|---|---|
-| Lớp/năm học hiện tại và lịch sử | 5.3 |
-| Chuyên cần | 5.6 |
-| Bài tập & nộp bài | 5.7 |
-| Bảng điểm đã công bố | 5.10 |
-| Phiếu kết quả/in PDF | 5.10 |
-| Hạnh kiểm & nhận xét đã công bố | 5.11 |
-| Đơn từ/yêu cầu | 5.13 |
+| Chức năng | Trạng thái | Task |
+|---|---|---|
+| Lớp hiện tại và lịch sử lớp | Done | 5.3 |
+| Chuyên cần, bài tập, điểm, phiếu kết quả | Done | 5.6-5.10 |
+| Hạnh kiểm, đơn/yêu cầu, hồ sơ | Done | 5.11-5.13 |
+| Thời khóa biểu lớp theo ca | Polish | 5.15 |
+| Lọc điểm theo năm/học kỳ/môn và xem chi tiết môn | Polish | 5.16 |
+| Lịch kiểm tra/thi và lịch học bù | Planned | 5.17 |
+| Nộp bài và xem phản hồi giáo viên | Polish | 5.19 |
+| Thông báo bắt buộc và xác nhận đã đọc | Planned | 5.20 |
 
 ## Parent/Guardian Portal
 
-| Tab/chức năng | Task |
+| Chức năng | Trạng thái | Task |
+|---|---|---|
+| Chọn học sinh được liên kết | Done | 5.12 |
+| Xem chuyên cần, điểm, hạnh kiểm | Done | 5.12 |
+| Đơn nghỉ phép | Polish | 5.13, 5.20 |
+| Lịch học và lịch kiểm tra | Planned | 5.15, 5.17 |
+| Thông báo, xác nhận đã đọc và ưu tiên khẩn | Planned | 5.20 |
+
+## Mở rộng sau core SIS
+
+| Chức năng | Task |
 |---|---|
-| Chọn học sinh được liên kết | 5.12 |
-| Thông báo | 5.12 |
-| Chuyên cần | 5.12 + 5.6 |
-| Bảng điểm đã công bố | 5.12 + 5.10 |
-| Hạnh kiểm/nhận xét | 5.12 + 5.11 |
+| Y tế học đường và hỗ trợ học sinh | 7.1 |
+| Tuyển sinh trực tuyến | 7.2 |
+| Khoản thu, hóa đơn và đối soát | 7.3 |
+| Liên thông dữ liệu và data governance | 7.4 |
 
 ## Quy tắc acceptance xuyên role
 
-1. Menu/tab không hiển thị nếu role không có khả năng truy cập.
-2. Ẩn UI không thay thế backend authorization.
-3. Admin, teacher, student và guardian phải có ít nhất một forbidden-path test.
-4. Student/guardian chỉ thấy dữ liệu đã approved/published.
-5. Mọi danh sách có loading/error/empty; bảng lớn có pagination hoặc virtualize.
-6. Mobile phải dùng được luồng read; grade entry desktop/tablet được ưu tiên
-   nhưng không được vỡ layout mobile.
-7. Dashboard chỉ tổng hợp dữ liệu từ module đã hoàn thành, không dùng số giả.
+1. Menu ẩn không thay thế backend authorization.
+2. Teacher phải đúng assignment; student phải đúng enrollment; guardian phải có
+   liên kết còn hiệu lực.
+3. Student/guardian chỉ thấy dữ liệu đã công bố.
+4. Bảng lớn phải pagination hoặc virtualize và hoạt động trên mobile.
+5. Mỗi workflow có loading, error, empty, conflict và forbidden state.
+6. Dashboard chỉ tổng hợp dữ liệu thật từ module đã hoàn thành.
+7. Dữ liệu demo phải vượt qua cùng validation/conflict engine với dữ liệu thật.

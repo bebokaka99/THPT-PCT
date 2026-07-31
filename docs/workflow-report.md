@@ -1,5 +1,23 @@
 # Workflow Report
 
+## 2026-08-01 - Portal gap review and workflow expansion
+
+- Không sửa source code hoặc database trong bước này.
+- Bổ sung P0 Task 5.15 về ca học, version thời khóa biểu và conflict giáo viên,
+  lớp, phòng.
+- Bổ sung P0 Task 5.16 về lọc điểm theo năm, học kỳ, môn và chi tiết môn với số
+  cột TX động.
+- Bổ sung Task 5.17-5.22 cho lịch thi, dạy thay, bài nộp/phản hồi, truyền thông
+  phụ huynh, kế hoạch bài dạy và sổ đầu bài điện tử.
+- Bổ sung Phase 7 cho y tế học đường, tuyển sinh, khoản thu và liên thông dữ liệu;
+  các task này cần product/privacy gate trước khi code.
+- Chuẩn hóa `WORKFLOW.md`, `ACADEMIC-SCOPE.md`, `TASK-TEMPLATE.md`, requirements,
+  database/API design và tài liệu assignment/gradebook.
+- Rule mới bắt buộc conflict test, fixture hợp lệ, không hardcode ca/số tiết/số
+  cột TX và không đánh dấu hoàn thành chỉ vì build pass.
+- Kiểm tra Markdown links, task numbering, mojibake và whitespace: pass.
+- Task triển khai tiếp theo: **5.15 - Timetable Integrity, Shifts & Conflict Engine**.
+
 > Đây là log lịch sử append-only. Các phần cũ có thể mô tả MySQL; từ `P0-DB`
 > trở đi PostgreSQL là database canonical và không dùng lại hướng dẫn MySQL/XAMPP.
 

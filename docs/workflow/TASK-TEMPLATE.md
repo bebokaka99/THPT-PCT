@@ -1,42 +1,51 @@
-# Task X.Y — Tên task
+# Task X.Y - Tên task
 
-> **Phase:** X  
-> **Trạng thái:** ⏳ Chưa thực hiện  
+> **Phase:** X
+> **Ưu tiên:** P0 | P1 | P2
+> **Trạng thái:** Chưa thực hiện | Đang thực hiện | Hoàn thành | Bị chặn
 > **Yêu cầu trước:** Liệt kê task dependency
 
 ## Mục tiêu
 
-Mô tả kết quả nghiệp vụ cần đạt, không chỉ tên file hoặc công nghệ.
+Mô tả kết quả nghiệp vụ có thể quan sát và kiểm chứng được.
 
 ## Phạm vi bắt buộc
 
-- Database/migration.
-- Backend API, validation, permission.
-- Frontend routes, states và responsive.
-- Dữ liệu kiểm tra local tối thiểu.
+- Database/migration và kế hoạch backfill.
+- Backend API, validation, transaction, permission và audit.
+- Frontend route, loading/error/empty/permission states và responsive.
+- Dữ liệu demo hợp lệ để kiểm tra thủ công.
 - Tài liệu vận hành liên quan.
 
 ## Ngoài phạm vi
 
-Ghi rõ phần chưa làm để tránh mở rộng task không kiểm soát.
+Ghi rõ phần chưa làm để ngăn mở rộng task ngoài kiểm soát.
+
+## Quy tắc nghiệp vụ
+
+- Liệt kê invariant bắt buộc và trường hợp xung đột.
+- Xác định source of truth, trạng thái và quyền theo phạm vi.
+- Không hardcode quy tắc có thể thay đổi theo năm học/trường.
 
 ## Quy tắc kỹ thuật
 
-- PostgreSQL migration mới, không sửa migration đã chạy.
-- Không bypass service/repository hoặc RBAC.
-- Không trả dữ liệu nhạy cảm.
-- Mọi write quan trọng phải có transaction/audit khi phù hợp.
-- UI phải có loading/error/empty/permission states.
+- Chỉ thêm migration PostgreSQL mới; không sửa migration đã áp dụng.
+- SQL nghiệp vụ chỉ nằm trong repository và phải parameterized.
+- Controller không truy cập database trực tiếp.
+- Write nhiều bảng phải dùng transaction.
+- Dữ liệu nhạy cảm phải có RBAC, scope và audit phù hợp.
+- Không đánh dấu hoàn thành nếu fixture vi phạm nghiệp vụ.
 
 ## Checklist triển khai
 
-- [ ] Đọc dependency và schema hiện tại
-- [ ] Viết migration idempotent
+- [ ] Đọc schema, API và task dependency hiện tại
+- [ ] Chốt migration/backfill/rollback
 - [ ] Backend validation/service/repository/API
-- [ ] Permission và ownership tests
+- [ ] Conflict, permission và ownership tests
 - [ ] Frontend service/type/routes/UI
 - [ ] Responsive và accessibility smoke
-- [ ] Cập nhật docs
+- [ ] Dữ liệu demo hợp lệ
+- [ ] Cập nhật tài liệu
 
 ## Tự kiểm tra bắt buộc
 
@@ -44,14 +53,18 @@ Ghi rõ phần chưa làm để tránh mở rộng task không kiểm soát.
 - [ ] Backend `npm run quality`
 - [ ] Frontend `npm run build`
 - [ ] Happy path bằng API thật
-- [ ] Ít nhất một forbidden path
+- [ ] Conflict path trả lỗi rõ ràng
+- [ ] Forbidden path theo role/scope
+- [ ] Reload UI giữ đúng dữ liệu
 - [ ] Không phá module hiện có
-- [ ] Không tạo dữ liệu/file mồ côi
+- [ ] Docker runtime healthy nếu task tác động runtime
 
 ## Definition of Done
 
-Task chỉ hoàn thành khi migration, build, automated tests và runtime flow đều
-pass; report ghi rõ phần chưa kiểm tra và giới hạn còn lại.
+Task chỉ hoàn thành khi migration, automated tests và runtime flow đều pass;
+dữ liệu demo không vi phạm invariant; report ghi rõ giới hạn còn lại. Build pass
+hoặc có màn hình mới nhưng chưa lưu/đọc đúng dữ liệu không được tính là hoàn
+thành.
 
 ## Khu vực Report
 
@@ -60,8 +73,9 @@ pass; report ghi rõ phần chưa kiểm tra và giới hạn còn lại.
 - Files/migrations:
 - API/routes:
 - Automated tests:
-- Runtime checks:
-- Security/RBAC checks:
+- Runtime/UI checks:
+- Security/RBAC/conflict checks:
+- Demo data:
 - Known limitations:
 - Next task:
 ```

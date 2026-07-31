@@ -1,27 +1,34 @@
 # Workflow plans
 
-Các tài liệu trong thư mục này là kế hoạch/lịch sử được viết trước khi đổi
-database. Những đoạn đề cập MySQL/XAMPP chỉ có giá trị tham khảo lịch sử.
+Thư mục này là nguồn điều phối công việc chính thức của THPT-PCT-PT. Mỗi task
+phải có một file Markdown riêng và được liên kết trong `WORKFLOW.md`.
 
-Từ task `P0-DB` trở đi, quy ước chính thức là:
+## Nguồn dữ liệu chuẩn
 
-- PostgreSQL 18.
-- Migration tại `database/postgresql/migrations`.
-- Seed tại `database/postgresql/seeds`.
-- Chạy local bằng Docker Compose hoặc PostgreSQL native.
-- Không chạy lại SQL trong `database/schema` và `database/seeds`.
+- Database: PostgreSQL 18.
+- Migration: `database/postgresql/migrations`.
+- Seed: `database/postgresql/seeds`.
+- Local runtime: Docker Compose hoặc PostgreSQL native.
+- `database/schema` và `database/seeds` chỉ là lịch sử MySQL, không được dùng
+  cho thay đổi mới.
 
 ## Khuôn task bắt buộc
 
-- Dùng [TASK-TEMPLATE.md](TASK-TEMPLATE.md) khi tạo task mới.
-- Task phải mô tả kết quả nghiệp vụ, dependency, ngoài phạm vi, security rules,
-  self-check và Definition of Done.
-- Không đánh dấu hoàn thành chỉ vì TypeScript build pass.
-- Task học vụ phải test role + ownership + assignment/enrollment scope.
+- Dùng [TASK-TEMPLATE.md](TASK-TEMPLATE.md).
+- Nêu rõ dependency, phạm vi, ngoài phạm vi và dữ liệu bị ảnh hưởng.
+- Mọi task học vụ phải có happy path, conflict path và forbidden path.
+- Build pass không đủ để đánh dấu hoàn thành; phải chạy migration, API thật,
+  kiểm tra UI và xác nhận dữ liệu lưu đúng.
+- Demo/fixture phải tuân thủ rule nghiệp vụ giống production. Không dùng dữ liệu
+  trùng lịch hoặc sai phạm vi chỉ để làm UI có dữ liệu.
+- Khi hoàn thành phải cập nhật task file, `WORKFLOW.md` và
+  `docs/workflow-report.md`.
 
-## Thứ tự mới
+## Thứ tự hiện tại
 
-- Phase 4 hoàn thiện portal/CMS hiện có.
-- Phase 5 xây Academic Operations: năm học, môn, enrollment, phân công, điểm
-  danh, bài tập, gradebook, bảng điểm, hạnh kiểm và guardian.
-- Phase 6 mới chuẩn bị production.
+1. Hoàn thành P0 còn mở: Task 5.15 và 5.16.
+2. Hoàn thiện workflow học vụ P1: Task 5.17 đến 5.22.
+3. Tiếp tục các production gate Phase 6.
+4. Chỉ triển khai Phase 7 khi phạm vi sản phẩm được nhà trường chấp thuận.
+
+Không mở module mới nếu task trước đang còn lỗi tính đúng đắn dữ liệu.
