@@ -242,7 +242,7 @@ export async function createScheduleOverrideNotifications(input: {
       type: 'timetable',
       target_role: 'guardian',
       classroom_id: input.classroomId,
-      related_url: `/parent/students?tab=timetable&date=${input.date}`,
+      related_url: '/parent/academic-calendar',
     }, input.createdByUserId, guardians));
   }
   await Promise.all(jobs);
