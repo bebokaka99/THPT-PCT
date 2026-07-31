@@ -1,0 +1,164 @@
+name: Deploy Release
+
+on:
+  workflow_run:
+    workflows:
+      - Quality Gate
+    branches:
+      - main
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Deployment environment
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      action:
+        description: Deploy the selected SHA or roll back one release
+        required: true
+        type: choice
+        options:
+          - deploy
+          - rollback
+      release_sha:
+        description: Full commit SHA for deploy; ignored for rollback
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-${{ github.event_name == 'workflow_dispatch' && inputs.target || 'staging' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  staging:
+    name: Staging deploy and smoke
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'staging')
+    runs-on:
+      - self-hosted
+      - linux
+      - staging
+    environment: staging
+    timeout-minutes: 20
+    env:
+      RELEASE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.release_sha }}
+      DEPLOY_ACTION: ${{ github.event_name == 'workflow_dispatch' && inputs.action || 'deploy' }}
+      DEPLOY_ENV_FILE: ${{ secrets.DEPLOY_ENV_FILE }}
+      APP_URL: ${{ vars.APP_URL }}
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_SHA }}
+
+      - name: Login to GitHub Container Registry
+        shell: bash
+        run: |
+          printf '%s' "${{ secrets.GITHUB_TOKEN }}" |
+            docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Resolve image prefix
+        id: images
+        shell: bash
+        run: |
+          owner="$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          repository="$(basename "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+          echo "prefix=ghcr.io/${owner}/${repository}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy or roll back staging
+        shell: bash
+        run: |
+          if [ "$DEPLOY_ACTION" = "rollback" ]; then
+            bash tools/rollback-release.sh staging "$DEPLOY_ENV_FILE"
+          else
+            bash tools/deploy-release.sh \
+              staging \
+              "$RELEASE_SHA" \
+              "${{ steps.images.outputs.prefix }}" \
+              "$DEPLOY_ENV_FILE"
+          fi
+
+      - name: Smoke staging
+        shell: bash
+        run: bash tools/smoke-deployment.sh "$APP_URL"
+
+      - name: Roll back failed staging deployment
+        if: failure() && env.DEPLOY_ACTION == 'deploy'
+        shell: bash
+        run: bash tools/rollback-release.sh staging "$DEPLOY_ENV_FILE"
+
+  production:
+    name: Production deploy and smoke
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.target == 'production'
+    runs-on:
+      - self-hosted
+      - linux
+      - production
+    environment: production
+    timeout-minutes: 20
+    env:
+      RELEASE_SHA: ${{ inputs.release_sha }}
+      DEPLOY_ACTION: ${{ inputs.action }}
+      DEPLOY_ENV_FILE: ${{ secrets.DEPLOY_ENV_FILE }}
+      APP_URL: ${{ vars.APP_URL }}
+    steps:
+      - name: Validate production request
+        shell: bash
+        run: |
+          if [ "$DEPLOY_ACTION" = "deploy" ] && [ -z "$RELEASE_SHA" ]; then
+            echo "release_sha is required for a production deploy." >&2
+            exit 1
+          fi
+
+      - name: Checkout release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_SHA || github.sha }}
+
+      - name: Login to GitHub Container Registry
+        shell: bash
+        run: |
+          printf '%s' "${{ secrets.GITHUB_TOKEN }}" |
+            docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Resolve image prefix
+        id: images
+        shell: bash
+        run: |
+          owner="$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          repository="$(basename "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+          echo "prefix=ghcr.io/${owner}/${repository}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy or roll back production
+        shell: bash
+        run: |
+          if [ "$DEPLOY_ACTION" = "rollback" ]; then
+            bash tools/rollback-release.sh production "$DEPLOY_ENV_FILE"
+          else
+            bash tools/deploy-release.sh \
+              production \
+              "$RELEASE_SHA" \
+              "${{ steps.images.outputs.prefix }}" \
+              "$DEPLOY_ENV_FILE"
+          fi
+
+      - name: Smoke production
+        shell: bash
+        run: bash tools/smoke-deployment.sh "$APP_URL"
+
+      - name: Roll back failed production deployment
+        if: failure() && env.DEPLOY_ACTION == 'deploy'
+        shell: bash
+        run: bash tools/rollback-release.sh production "$DEPLOY_ENV_FILE"

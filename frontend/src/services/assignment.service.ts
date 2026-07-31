@@ -1,0 +1,101 @@
+import type {
+  ApiDataResponse,
+  ApiListResponse,
+  ApiPaginatedResponse,
+} from '../types/api';
+import type {
+  Assignment,
+  AssignmentDetail,
+  AssignmentInput,
+  AssignmentListQuery,
+  AssignmentSubmission,
+  AssignmentUpdateInput,
+} from '../types/assignment';
+import { apiClient, authHeaders } from './api-client';
+
+export function getAssignments(
+  token: string,
+  query: AssignmentListQuery = {},
+) {
+  return apiClient.get<ApiPaginatedResponse<Assignment>>('/assignments', {
+    headers: authHeaders(token),
+    params: {
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
+      q: query.q,
+      classroom_id: query.classroom_id,
+      subject_id: query.subject_id,
+      semester_id: query.semester_id,
+      status: query.status,
+    },
+  });
+}
+
+export function getAssignment(token: string, id: number) {
+  return apiClient.get<ApiDataResponse<AssignmentDetail>>(`/assignments/${id}`, {
+    headers: authHeaders(token),
+  });
+}
+
+export function createAssignment(token: string, input: AssignmentInput) {
+  return apiClient.post<ApiDataResponse<Assignment>>('/assignments', input, {
+    headers: authHeaders(token),
+  });
+}
+
+export function updateAssignment(
+  token: string,
+  id: number,
+  input: AssignmentUpdateInput,
+) {
+  return apiClient.patch<ApiDataResponse<Assignment>>(
+    `/assignments/${id}`,
+    input,
+    { headers: authHeaders(token) },
+  );
+}
+
+export function publishAssignment(token: string, id: number) {
+  return apiClient.post<ApiDataResponse<Assignment>>(
+    `/assignments/${id}/publish`,
+    undefined,
+    { headers: authHeaders(token) },
+  );
+}
+
+export function closeAssignment(token: string, id: number) {
+  return apiClient.post<ApiDataResponse<Assignment>>(
+    `/assignments/${id}/close`,
+    undefined,
+    { headers: authHeaders(token) },
+  );
+}
+
+export function deleteAssignment(token: string, id: number) {
+  return apiClient.delete<void>(`/assignments/${id}`, {
+    headers: authHeaders(token),
+  });
+}
+
+export function getAssignmentSubmissions(token: string, id: number) {
+  return apiClient.get<ApiListResponse<AssignmentSubmission>>(
+    `/assignments/${id}/submissions`,
+    { headers: authHeaders(token) },
+  );
+}
+
+export function submitAssignment(
+  token: string,
+  id: number,
+  file: File,
+  note?: string,
+) {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (note?.trim()) formData.append('note', note.trim());
+  return apiClient.upload<ApiDataResponse<AssignmentSubmission>>(
+    `/assignments/${id}/submissions`,
+    formData,
+    { headers: authHeaders(token) },
+  );
+}

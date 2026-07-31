@@ -1,0 +1,205 @@
+name: Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22.23.1"
+  TRIVY_VERSION: "0.72.0"
+
+jobs:
+  backend-quality:
+    name: Backend quality and migration contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18.4-alpine3.23
+        env:
+          POSTGRES_DB: thpt_pct_pt
+          POSTGRES_USER: thpt_pct_pt
+          POSTGRES_PASSWORD: thpt_pct_pt_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U thpt_pct_pt -d thpt_pct_pt"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://thpt_pct_pt:thpt_pct_pt_ci@localhost:5432/thpt_pct_pt
+      JWT_SECRET: ci_only_secret_with_more_than_32_characters
+      NODE_ENV: test
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend from lockfile
+        run: npm ci
+        working-directory: backend
+
+      - name: Audit backend production dependencies
+        run: npm audit --omit=dev --audit-level=high
+        working-directory: backend
+
+      - name: Apply schema and seed contract
+        run: npm run db:setup
+        working-directory: backend
+
+      - name: Run backend quality suite
+        run: npm run quality
+        working-directory: backend
+
+      - name: Verify migration ledger
+        run: |
+          count="$(psql "$DATABASE_URL" -tAc 'SELECT COUNT(*) FROM schema_migrations;')"
+          test "$count" -gt 0
+
+  frontend-quality:
+    name: Frontend build and dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend from lockfile
+        run: npm ci
+        working-directory: frontend
+
+      - name: Audit frontend production dependencies
+        run: node ../tools/check-npm-audit.mjs
+        working-directory: frontend
+
+      - name: Build frontend with production API base
+        run: npm run build
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: /api
+          VITE_PUBLIC_SITE_URL: http://localhost:8080
+
+  container-images:
+    name: Immutable container images
+    needs:
+      - backend-quality
+      - frontend-quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-prefix: ${{ steps.images.outputs.prefix }}
+      release-sha: ${{ github.sha }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Resolve immutable image names
+        id: images
+        shell: bash
+        run: |
+          owner="$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          repository="$(basename "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+          prefix="ghcr.io/${owner}/${repository}"
+          echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
+          echo "backend=${prefix}-backend:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "frontend=${prefix}-frontend:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "postgres=${prefix}-postgres:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build images from clean context
+        shell: bash
+        run: |
+          docker build --pull \
+            --file backend/Dockerfile \
+            --tag "${{ steps.images.outputs.backend }}" .
+          docker build --pull \
+            --file frontend/Dockerfile \
+            --build-arg VITE_API_BASE_URL=/api \
+            --build-arg VITE_PUBLIC_SITE_URL=http://localhost:8080 \
+            --tag "${{ steps.images.outputs.frontend }}" .
+          docker build --pull \
+            --file database/Dockerfile \
+            --tag "${{ steps.images.outputs.postgres }}" .
+
+      - name: Scan final images
+        shell: bash
+        run: |
+          for image in \
+            "${{ steps.images.outputs.backend }}" \
+            "${{ steps.images.outputs.frontend }}" \
+            "${{ steps.images.outputs.postgres }}"
+          do
+            docker run --rm \
+              --volume /var/run/docker.sock:/var/run/docker.sock \
+              --volume trivy-cache:/root/.cache/ \
+              "aquasec/trivy:${TRIVY_VERSION}" image \
+              --scanners vuln \
+              --severity HIGH,CRITICAL \
+              --exit-code 1 \
+              --quiet \
+              "$image"
+          done
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          printf '%s' "${{ secrets.GITHUB_TOKEN }}" |
+            docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Push immutable images
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          docker push "${{ steps.images.outputs.backend }}"
+          docker push "${{ steps.images.outputs.frontend }}"
+          docker push "${{ steps.images.outputs.postgres }}"
+
+      - name: Write release manifest
+        shell: bash
+        run: |
+          cat > release-manifest.json <<EOF
+          {
+            "commit_sha": "${GITHUB_SHA}",
+            "repository": "${GITHUB_REPOSITORY}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "backend_image": "${{ steps.images.outputs.backend }}",
+            "frontend_image": "${{ steps.images.outputs.frontend }}",
+            "postgres_image": "${{ steps.images.outputs.postgres }}"
+          }
+          EOF
+
+      - name: Upload release manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-manifest-${{ github.sha }}
+          path: release-manifest.json
+          if-no-files-found: error
+          retention-days: 30

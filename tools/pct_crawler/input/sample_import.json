@@ -1,0 +1,17 @@
+{
+  "items": [
+    {
+      "source_site": "https://phanchutrinhbinhthuan.edu.vn",
+      "source_url": "https://phanchutrinhbinhthuan.edu.vn/local-sample/harden-crawler",
+      "title": "Mau import local cho cong cu crawler",
+      "slug": "mau-import-local-cho-cong-cu-crawler",
+      "excerpt": "Ban ghi mau de test import tu file JSON local.",
+      "content_html": "<article><h1>Mau import local cho cong cu crawler</h1><p>Day la noi dung HTML mau dung de kiem tra pipeline import local vao bang imported_contents.</p><p>Noi dung nay khong duoc publish tu dong va can admin kiem tra truoc khi convert.</p></article>",
+      "content_text": "Mau import local cho cong cu crawler. Day la noi dung HTML mau dung de kiem tra pipeline import local vao bang imported_contents. Noi dung nay khong duoc publish tu dong va can admin kiem tra truoc khi convert.",
+      "category_name": "Crawler Local Sample",
+      "detected_published_at": null,
+      "images": [],
+      "attachments": []
+    }
+  ]
+}

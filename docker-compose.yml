@@ -1,0 +1,98 @@
+name: thpt-pct-pt
+
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: database/Dockerfile
+    image: ${POSTGRES_IMAGE:-thpt-pct-pt-postgres:18.4}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-thpt_pct_pt}
+      POSTGRES_USER: ${POSTGRES_USER:-thpt_pct_pt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.docker}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-55432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: ${BACKEND_IMAGE:-thpt-pct-pt-backend:latest}
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER:-thpt_pct_pt}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.docker}
+      PGDATABASE: ${POSTGRES_DB:-thpt_pct_pt}
+      PGSSLMODE: disable
+      PG_POOL_MAX: ${PG_POOL_MAX:-20}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env.docker}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_DAYS: ${JWT_REFRESH_EXPIRES_DAYS:-7}
+      CORS_ORIGINS: ${APP_ORIGIN:-http://localhost:8080}
+      TRUST_PROXY_HOPS: 1
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      LOGIN_RATE_LIMIT_MAX_REQUESTS: ${LOGIN_RATE_LIMIT_MAX_REQUESTS:-5}
+      UPLOAD_RATE_LIMIT_MAX_REQUESTS: ${UPLOAD_RATE_LIMIT_MAX_REQUESTS:-10}
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT:-4000}:4000"
+    volumes:
+      - public_uploads:/app/backend/uploads
+      - private_uploads:/app/backend/private-uploads
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_PUBLIC_SITE_URL: ${APP_ORIGIN:-http://localhost:8080}
+    image: ${FRONTEND_IMAGE:-thpt-pct-pt-frontend:latest}
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_BIND_ADDRESS:-127.0.0.1}:${FRONTEND_HOST_PORT:-8080}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  public_uploads:
+  private_uploads:

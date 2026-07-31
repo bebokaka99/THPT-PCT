@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+tools/pct_crawler/.venv/
+__pycache__/
+*.pyc
+
+# Build outputs
+dist/
+build/
+coverage/
+.local/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# Environment files
+.env
+.env.docker
+.deploy/
+.local/
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+tools/pct_crawler/output/*.json
+backend/uploads/
+backend/private-uploads/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
