@@ -13,26 +13,27 @@ export function signAccessToken(payload: AccessTokenPayload) {
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload {
-  try {
-    const payload = jwt.verify(token, env.jwt.secret);
+  for (const secret of env.jwt.verificationSecrets) {
+    try {
+      const payload = jwt.verify(token, secret);
 
-    if (
-      typeof payload !== 'object' ||
-      payload === null ||
-      typeof payload.userId !== 'number'
-    ) {
-      throw new HttpError(401, 'Invalid token payload');
+      if (
+        typeof payload !== 'object' ||
+        payload === null ||
+        typeof payload.userId !== 'number'
+      ) {
+        throw new HttpError(401, 'Invalid token payload');
+      }
+
+      return {
+        userId: payload.userId,
+      };
+    } catch (error) {
+      if (error instanceof HttpError) {
+        throw error;
+      }
     }
-
-    return {
-      userId: payload.userId,
-    };
-  } catch (error) {
-    if (error instanceof HttpError) {
-      throw error;
-    }
-
-    throw new HttpError(401, 'Invalid or expired token');
   }
-}
 
+  throw new HttpError(401, 'Invalid or expired token');
+}

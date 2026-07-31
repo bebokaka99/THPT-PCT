@@ -5,8 +5,8 @@ export const refreshCookieName = 'thpt_pct_pt_refresh_token';
 
 const refreshCookieOptions = {
   httpOnly: true,
-  secure: env.isProduction,
-  sameSite: 'strict' as const,
+  secure: env.security.cookieSecure,
+  sameSite: env.security.cookieSameSite,
   path: '/api/auth',
 };
 

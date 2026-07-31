@@ -53,7 +53,6 @@ jobs:
     env:
       RELEASE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.release_sha }}
       DEPLOY_ACTION: ${{ github.event_name == 'workflow_dispatch' && inputs.action || 'deploy' }}
-      DEPLOY_ENV_FILE: ${{ secrets.DEPLOY_ENV_FILE }}
       DEPLOY_STATE_ROOT: ${{ vars.DEPLOY_STATE_ROOT }}
       APP_URL: ${{ vars.APP_URL }}
     steps:
@@ -67,6 +66,21 @@ jobs:
         run: |
           printf '%s' "${{ secrets.GITHUB_TOKEN }}" |
             docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Materialize protected deployment environment
+        shell: bash
+        env:
+          DEPLOY_ENV_B64: ${{ secrets.DEPLOY_ENV_B64 }}
+        run: |
+          if [ -z "$DEPLOY_ENV_B64" ]; then
+            echo "DEPLOY_ENV_B64 is required in the staging environment." >&2
+            exit 1
+          fi
+          env_file="$RUNNER_TEMP/thpt-pct-pt-staging.env"
+          umask 077
+          printf '%s' "$DEPLOY_ENV_B64" | base64 --decode > "$env_file"
+          test -s "$env_file"
+          echo "DEPLOY_ENV_FILE=$env_file" >> "$GITHUB_ENV"
 
       - name: Resolve image prefix
         id: images
@@ -94,9 +108,14 @@ jobs:
         run: bash tools/smoke-deployment.sh "$APP_URL"
 
       - name: Roll back failed staging deployment
-        if: failure() && env.DEPLOY_ACTION == 'deploy'
+        if: failure() && env.DEPLOY_ACTION == 'deploy' && env.DEPLOY_ENV_FILE != ''
         shell: bash
         run: bash tools/rollback-release.sh staging "$DEPLOY_ENV_FILE"
+
+      - name: Remove staging deployment environment
+        if: always() && env.DEPLOY_ENV_FILE != ''
+        shell: bash
+        run: rm -f -- "$DEPLOY_ENV_FILE"
 
   production:
     name: Production deploy and smoke
@@ -112,7 +131,6 @@ jobs:
     env:
       RELEASE_SHA: ${{ inputs.release_sha }}
       DEPLOY_ACTION: ${{ inputs.action }}
-      DEPLOY_ENV_FILE: ${{ secrets.DEPLOY_ENV_FILE }}
       DEPLOY_STATE_ROOT: ${{ vars.DEPLOY_STATE_ROOT }}
       APP_URL: ${{ vars.APP_URL }}
     steps:
@@ -134,6 +152,21 @@ jobs:
         run: |
           printf '%s' "${{ secrets.GITHUB_TOKEN }}" |
             docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Materialize protected deployment environment
+        shell: bash
+        env:
+          DEPLOY_ENV_B64: ${{ secrets.DEPLOY_ENV_B64 }}
+        run: |
+          if [ -z "$DEPLOY_ENV_B64" ]; then
+            echo "DEPLOY_ENV_B64 is required in the production environment." >&2
+            exit 1
+          fi
+          env_file="$RUNNER_TEMP/thpt-pct-pt-production.env"
+          umask 077
+          printf '%s' "$DEPLOY_ENV_B64" | base64 --decode > "$env_file"
+          test -s "$env_file"
+          echo "DEPLOY_ENV_FILE=$env_file" >> "$GITHUB_ENV"
 
       - name: Resolve image prefix
         id: images
@@ -161,6 +194,11 @@ jobs:
         run: bash tools/smoke-deployment.sh "$APP_URL"
 
       - name: Roll back failed production deployment
-        if: failure() && env.DEPLOY_ACTION == 'deploy'
+        if: failure() && env.DEPLOY_ACTION == 'deploy' && env.DEPLOY_ENV_FILE != ''
         shell: bash
         run: bash tools/rollback-release.sh production "$DEPLOY_ENV_FILE"
+
+      - name: Remove production deployment environment
+        if: always() && env.DEPLOY_ENV_FILE != ''
+        shell: bash
+        run: rm -f -- "$DEPLOY_ENV_FILE"

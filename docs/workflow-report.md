@@ -1903,3 +1903,35 @@ chỉ chuyển sang completed sau khi chạy được các external gates nêu t
   smoke test pass, `current-release` quay về A và `previous-release` là B.
 - Đã dọn toàn bộ file/env/image/volume tạm của drill; Docker stack local chính
   vẫn healthy và frontend/backend trả HTTP 200.
+
+## Task 6.4 - Environment & Secrets Management (external config pending)
+
+### Đã triển khai
+
+- Backend typed env contract cho development/test/staging/production; validate
+  enum, số, boolean, URL, CORS và PostgreSQL config.
+- Staging/production fail-fast với placeholder JWT, database thiếu password,
+  cookie không secure, URL/CORS HTTP từ xa hoặc PostgreSQL từ xa không SSL.
+- Thêm JWT key ring: khóa mới dùng để ký, khóa cũ trong
+  `JWT_PREVIOUS_SECRETS` chỉ dùng verify trong cửa sổ rotation.
+- Frontend gom hai public variables tại `src/config/public-env.ts`; backend
+  secret không được phép đi vào bundle.
+- Thêm source/bundle secret scanner và image metadata gate trong CI.
+- Deploy nhận `DEPLOY_ENV_B64` từ GitHub Environment, materialize tạm với umask
+  `077`, rồi xóa bằng bước `always()`.
+- Thêm runbook `docs/environment-secrets.md` cho setup, phân loại và rotation.
+
+### Đã kiểm tra
+
+- Database setup và full backend quality: pass.
+- Env security smoke gồm missing/unsafe config và JWT old-key verification: pass.
+- Frontend build/bundle scan: pass.
+- Actionlint và Compose config: pass.
+- Docker rebuild/health: pass; API, database và frontend hoạt động.
+- Backend/frontend/PostgreSQL image metadata local không chứa runtime secrets.
+
+### Còn chờ hạ tầng ngoài
+
+- GitHub PR/main image gate phải pass với CI mới.
+- Chỉ cấu hình `DEPLOY_ENV_B64` thật khi có staging/production target; không dùng
+  local development credential hoặc secret giả để đóng checklist.

@@ -43,7 +43,7 @@ Workflow `.github/workflows/deploy.yml` yêu cầu hai self-hosted Linux runners
 
 Mỗi GitHub Environment cần:
 
-- secret `DEPLOY_ENV_FILE`: absolute path tới env file nằm ngoài repository;
+- secret `DEPLOY_ENV_B64`: nội dung env runtime được base64 từ máy quản trị;
 - variable `APP_URL`: HTTPS origin của environment.
 - variable `DEPLOY_STATE_ROOT`: absolute path nằm ngoài Actions checkout, ví dụ
   `/var/lib/thpt-pct-pt/deploy-state`.
@@ -51,9 +51,13 @@ Mỗi GitHub Environment cần:
 Environment `production` phải có required reviewers. Staging tự deploy sau khi
 Quality Gate của `main` pass; production chỉ deploy bằng manual dispatch.
 
-Runner cần Docker Compose v2, quyền đọc GHCR package và quyền ghi thư mục
+Runner cần Docker Compose v2, `base64`, quyền đọc GHCR package và quyền ghi thư mục
 `DEPLOY_STATE_ROOT`. Env file chứa database/JWT secrets và `POSTGRES_IMAGE` đã
 được phê duyệt. App deployment chỉ đổi backend/frontend images.
+
+Workflow giải mã `DEPLOY_ENV_B64` vào `$RUNNER_TEMP` với quyền owner-only và xóa
+file bằng bước `always()`. Base64 không phải mã hóa; secret phải nằm trong GitHub
+Environment có access policy và production approval.
 
 Self-hosted runner phải dùng GitHub Actions Runner `2.327.1` trở lên vì các
 official actions trong workflow chạy trên Node.js 24.
