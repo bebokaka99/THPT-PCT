@@ -57,6 +57,7 @@ async function run() {
   let curriculumId: number | undefined;
   let classroomId: number | undefined;
   let academicYearId: number | undefined;
+  let semesterId: number | undefined;
 
   const server = app.listen(0, '127.0.0.1');
   await new Promise<void>((resolve, reject) => {
@@ -93,6 +94,14 @@ async function run() {
       ],
     );
     academicYearId = Number(academicYear.rows[0].id);
+    const semester = await postgresPool.query<{ id: number }>(
+      `INSERT INTO semesters (
+        academic_year_id, name, code, start_date, end_date, status, is_locked
+      ) VALUES ($1, 'Smoke semester', 'SMOKE', $2, $3, 'planned', FALSE)
+      RETURNING id`,
+      [academicYearId, `${startYear}-09-01`, `${startYear + 1}-01-15`],
+    );
+    semesterId = Number(semester.rows[0].id);
 
     const address = server.address() as AddressInfo;
     const baseUrl = `http://127.0.0.1:${address.port}/api`;
@@ -197,7 +206,8 @@ async function run() {
     const timetableInput = {
       title: `Timetable smoke ${suffix}`,
       academic_year_id: academicYearId,
-      is_active: true,
+      semester_id: semesterId,
+      status: 'draft',
       items: [
         {
           day_of_week: 2,
@@ -278,6 +288,9 @@ async function run() {
       await postgresPool.query('DELETE FROM subjects WHERE id = $1', [
         subjectId,
       ]);
+    }
+    if (semesterId) {
+      await postgresPool.query('DELETE FROM semesters WHERE id = $1', [semesterId]);
     }
     if (academicYearId) {
       await postgresPool.query('DELETE FROM academic_years WHERE id = $1', [

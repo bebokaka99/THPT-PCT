@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, CalendarCheck, Printer, ShieldCheck } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { ReportCardView } from '../../components/academic/ReportCardView';
+import { TimetablePrintView } from '../../components/classrooms/TimetablePrintView';
 import { ParentPortalLayout } from '../../components/layout/ParentPortalLayout';
 import { getGuardianStudentSummary } from '../../services/guardian.service';
 import { useAuth } from '../../stores/auth-context';
@@ -99,6 +100,13 @@ export function ParentStudentPage() {
                 </div>
               )}
             </section>
+
+            {summary.data.data.timetable && summary.data.data.child.classroom_name && (
+              <TimetablePrintView
+                classroom={{ name: summary.data.data.child.classroom_name }}
+                timetable={summary.data.data.timetable}
+              />
+            )}
 
             <section className="border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center gap-2">

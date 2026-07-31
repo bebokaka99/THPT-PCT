@@ -100,6 +100,11 @@ const AdminClassroomsPage = lazy(() =>
     default: module.AdminClassroomsPage,
   })),
 );
+const AdminTimetableSettingsPage = lazy(() =>
+  import('../pages/admin/AdminTimetableSettingsPage').then((module) => ({
+    default: module.AdminTimetableSettingsPage,
+  })),
+);
 const AdminDashboardPage = lazy(() =>
   import('../pages/admin/AdminDashboardPage').then((module) => ({
     default: module.AdminDashboardPage,
@@ -466,6 +471,10 @@ export function AppRoutes() {
           <Route
             path="/admin/classrooms/:id/edit"
             element={protectedAdminPage(<AdminClassroomFormPage />, 'classrooms.manage')}
+          />
+          <Route
+            path="/admin/timetable-settings"
+            element={protectedAdminPage(<AdminTimetableSettingsPage />, 'classrooms.manage')}
           />
           <Route
             path="/admin/documents"

@@ -43,12 +43,14 @@ export function TeacherTimetablePage() {
   });
 
   const items = schedule.data ?? [];
-  const maxLesson = Math.max(5, ...items.map((item) => item.lesson_index));
-  const lessons = Array.from({ length: maxLesson }, (_, index) => index + 1);
+  const shifts = [...new Map(items.map((item) => [
+    item.shift_id,
+    item.shift_name ?? `Ca ${item.shift_id}`,
+  ])).entries()];
   const slots = useMemo(() => {
     const result = new Map<string, PersonalTeachingTimetableItem[]>();
     for (const item of items) {
-      const key = `${item.day_of_week}-${item.lesson_index}`;
+      const key = `${item.shift_id}-${item.day_of_week}-${item.lesson_index}`;
       result.set(key, [...(result.get(key) ?? []), item]);
     }
     return result;
@@ -80,8 +82,14 @@ export function TeacherTimetablePage() {
         </section>
       ) : (
         <>
-          <section className="mt-6 hidden overflow-x-auto border border-slate-200 bg-white shadow-sm md:block">
-            <table className="min-w-[900px] border-collapse text-sm">
+          <section className="mt-6 hidden gap-5 md:grid">
+            {shifts.map(([shiftId, shiftName]) => {
+              const shiftItems = items.filter((item) => item.shift_id === shiftId);
+              const maxLesson = Math.max(5, ...shiftItems.map((item) => item.lesson_index));
+              const lessons = Array.from({ length: maxLesson }, (_, index) => index + 1);
+              return <div key={shiftId} className="overflow-x-auto border border-slate-200 bg-white shadow-sm">
+              <h2 className="border-b border-slate-200 bg-slate-50 px-4 py-3 font-bold text-emerald-800">{shiftName}</h2>
+              <table className="min-w-[900px] border-collapse text-sm">
               <thead>
                 <tr>
                   <th className="w-20 border-b border-r border-slate-200 bg-slate-50 p-3 text-left">Tiết</th>
@@ -99,7 +107,7 @@ export function TeacherTimetablePage() {
                     {days.map((day) => (
                       <td key={day.value} className="min-w-36 border-b border-r border-slate-200 p-2 align-top last:border-r-0">
                         <div className="grid gap-2">
-                          {(slots.get(`${day.value}-${lesson}`) ?? []).map((item) => (
+                          {(slots.get(`${shiftId}-${day.value}-${lesson}`) ?? []).map((item) => (
                             <SlotCard key={`${item.timetable_id}-${item.id}`} item={item} />
                           ))}
                         </div>
@@ -108,7 +116,9 @@ export function TeacherTimetablePage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+              </div>;
+            })}
           </section>
 
           <section className="mt-6 grid gap-4 md:hidden">
@@ -125,8 +135,9 @@ export function TeacherTimetablePage() {
                     <div className="mt-3 grid gap-3">
                       {dayItems.map((item) => (
                         <div key={`${item.timetable_id}-${item.id}`} className="grid grid-cols-[62px_minmax(0,1fr)] gap-3">
-                          <span className="inline-flex items-start gap-1 pt-2 text-xs font-semibold text-emerald-700">
-                            <Clock3 className="h-3.5 w-3.5" /> Tiết {item.lesson_index}
+                          <span className="inline-flex flex-col items-start gap-1 pt-2 text-xs font-semibold text-emerald-700">
+                            <span>{item.shift_name}</span>
+                            <span className="inline-flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" /> Tiết {item.lesson_index}</span>
                           </span>
                           <SlotCard item={item} />
                         </div>

@@ -26,7 +26,7 @@ phải có một file Markdown riêng và được liên kết trong `WORKFLOW.m
 
 ## Thứ tự hiện tại
 
-1. Hoàn thành P0 còn mở: Task 5.15 và 5.16.
+1. Hoàn thành P0 còn mở: Task 5.16.
 2. Hoàn thiện workflow học vụ P1: Task 5.17 đến 5.22.
 3. Tiếp tục các production gate Phase 6.
 4. Chỉ triển khai Phase 7 khi phạm vi sản phẩm được nhà trường chấp thuận.

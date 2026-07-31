@@ -1954,3 +1954,28 @@ chỉ chuyển sang completed sau khi chạy được các external gates nêu t
   immutable container images; source/bundle/image secret gates đều pass.
 - Chỉ cấu hình `DEPLOY_ENV_B64` thật khi có staging/production target; không dùng
   local development credential hoặc secret giả để đóng checklist.
+
+## Task 5.15 - Timetable Integrity, Shifts & Conflict Engine
+
+### Đã triển khai
+
+- Thêm ca học và giờ từng tiết có thể cấu hình, mặc định ca sáng/ca chiều mỗi ca 5 tiết.
+- Thêm draft/published/archived, version và người publish cho thời khóa biểu.
+- Mỗi tiết được ràng buộc vào teaching assignment và giáo viên thực tế.
+- Conflict engine chặn trùng lớp, giáo viên và phòng theo học kỳ, thứ, ca và tiết.
+- Student/guardian chỉ nhận timetable published; teacher chỉ nhận lịch dạy của mình.
+- Thêm UI admin cấu hình ca/tiết, conflict preview và publish/archive timetable.
+- Sửa fixture demo cho 12A1, 11A2, 10A3 không còn trùng lịch.
+
+### Tự kiểm tra
+
+- Migration/seed trên database rỗng: pass.
+- `npm run quality` backend: pass.
+- `npm run build` frontend: pass.
+- `npm run test:timetable-integrity`: pass.
+- Docker frontend/backend/PostgreSQL health và login admin: pass.
+
+### Giới hạn
+
+- Chưa có xếp lịch tự động, tuần A/B, dạy thay và override theo ngày.
+- Task kế tiếp bắt buộc: 5.16 - Student Grade Subject Exploration.

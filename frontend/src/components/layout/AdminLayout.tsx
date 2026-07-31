@@ -15,6 +15,7 @@ const sidebarItems = [
   { label: 'Môn học & chương trình', to: '/admin/subjects' },
   { label: 'Xếp lớp học sinh', to: '/admin/enrollments' },
   { label: 'Phân công giảng dạy', to: '/admin/teaching-assignments' },
+  { label: 'Ca học & giờ tiết', to: '/admin/timetable-settings' },
   { label: 'Cấu hình đầu điểm', to: '/admin/assessment-configurations' },
   { label: 'Chuyên cần', to: '/admin/attendance' },
   { label: 'Bài tập & bài nộp', to: '/admin/assignments' },

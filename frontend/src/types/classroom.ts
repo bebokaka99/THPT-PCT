@@ -61,6 +61,10 @@ export type TimetableItem = {
   timetable_id?: number;
   subject_id?: number | null;
   teaching_assignment_id?: number | null;
+  teacher_user_id?: number | null;
+  shift_id: number;
+  shift_code?: string;
+  shift_name?: string;
   day_of_week: number;
   lesson_index: number;
   subject_name: string;
@@ -78,7 +82,12 @@ export type Timetable = {
   academic_year_id: number | null;
   semester_id: number | null;
   title: string;
+  status: 'draft' | 'published' | 'archived';
+  version_number: number;
   is_active: boolean;
+  published_at: string | null;
+  published_by_user_id: number | null;
+  created_by_user_id: number | null;
   created_at: string;
   updated_at: string;
   items: TimetableItem[];
@@ -98,8 +107,42 @@ export type TimetableInput = {
   academic_year_id?: number;
   semester_id?: number | null;
   title: string;
+  status?: 'draft' | 'published' | 'archived';
   is_active?: boolean;
   items: TimetableItem[];
+};
+
+export type BellPeriod = {
+  id?: number;
+  shift_id?: number;
+  period_index: number;
+  starts_at: string;
+  ends_at: string;
+  sort_order: number;
+};
+
+export type SchoolShift = {
+  id: number;
+  code: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  periods: BellPeriod[];
+};
+
+export type TimetableConflict = {
+  type: 'teacher' | 'classroom' | 'room';
+  day_of_week: number;
+  shift_id: number;
+  shift_name: string;
+  lesson_index: number;
+  teacher_name: string | null;
+  room: string | null;
+  conflicting_classroom_id: number;
+  conflicting_classroom_name: string;
+  message: string;
 };
 
 export type ClassroomInput = {

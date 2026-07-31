@@ -10,6 +10,7 @@ import type {
   ClassroomPost,
   ClassroomRole,
   Timetable,
+  TimetableConflict,
   TimetableInput,
 } from '../types/classroom';
 
@@ -135,4 +136,36 @@ export function updateClassroomTimetable(token: string, id: number, timetableId:
 
 export function deleteClassroomTimetable(token: string, id: number, timetableId: number) {
   return apiClient.delete<void>(`/classrooms/${id}/timetable/${timetableId}`, { headers: authHeaders(token) });
+}
+
+export function previewClassroomTimetableConflicts(
+  token: string,
+  id: number,
+  input: TimetableInput,
+  excludeTimetableId?: number,
+) {
+  return apiClient.post<ApiListResponse<TimetableConflict>>(
+    `/classrooms/${id}/timetable/conflicts`,
+    input,
+    {
+      headers: authHeaders(token),
+      params: { exclude_timetable_id: excludeTimetableId },
+    },
+  );
+}
+
+export function publishClassroomTimetable(token: string, id: number, timetableId: number) {
+  return apiClient.patch<ApiDataResponse<Timetable>>(
+    `/classrooms/${id}/timetable/${timetableId}/publish`,
+    undefined,
+    { headers: authHeaders(token) },
+  );
+}
+
+export function archiveClassroomTimetable(token: string, id: number, timetableId: number) {
+  return apiClient.patch<ApiDataResponse<Timetable>>(
+    `/classrooms/${id}/timetable/${timetableId}/archive`,
+    undefined,
+    { headers: authHeaders(token) },
+  );
 }

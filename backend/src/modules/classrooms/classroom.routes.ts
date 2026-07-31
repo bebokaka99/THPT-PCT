@@ -23,9 +23,12 @@ import {
   updatePostController,
 } from './classroom.controller.js';
 import {
+  archiveClassroomTimetableController,
   createClassroomTimetableController,
   deleteClassroomTimetableController,
   getClassroomTimetableController,
+  previewTimetableConflictsController,
+  publishClassroomTimetableController,
   updateClassroomTimetableController,
 } from '../timetables/timetable.controller.js';
 
@@ -41,9 +44,12 @@ classroomRoutes.get('/:id/members', listMembersController);
 classroomRoutes.post('/:id/members', addMemberController);
 classroomRoutes.delete('/:id/members/:memberId', removeMemberController);
 classroomRoutes.get('/:id/timetable', getClassroomTimetableController);
+classroomRoutes.post('/:id/timetable/conflicts', previewTimetableConflictsController);
 classroomRoutes.post('/:id/timetable', createClassroomTimetableController);
 classroomRoutes.patch('/:id/timetable/:timetableId', updateClassroomTimetableController);
 classroomRoutes.delete('/:id/timetable/:timetableId', deleteClassroomTimetableController);
+classroomRoutes.patch('/:id/timetable/:timetableId/publish', publishClassroomTimetableController);
+classroomRoutes.patch('/:id/timetable/:timetableId/archive', archiveClassroomTimetableController);
 classroomRoutes.get('/:id/posts', listPostsController);
 classroomRoutes.post('/:id/posts', createPostController);
 classroomRoutes.patch('/:id/posts/:postId', updatePostController);

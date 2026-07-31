@@ -86,7 +86,7 @@
 - [x] [5.12 — Parent & Guardian Portal](phase-5-academic-operations/5.12-parent-guardian-portal.md)
 - [x] [5.13 — Student Requests & School Forms](phase-5-academic-operations/5.13-student-requests-forms.md)
 - [x] [5.14 — Academic Import/Export & Reports](phase-5-academic-operations/5.14-academic-import-export-reports.md)
-- [ ] [5.15 — Timetable Integrity, Shifts & Conflict Engine](phase-5-academic-operations/5.15-timetable-integrity-shifts-conflicts.md) **P0**
+- [x] [5.15 — Timetable Integrity, Shifts & Conflict Engine](phase-5-academic-operations/5.15-timetable-integrity-shifts-conflicts.md) **P0**
 - [ ] [5.16 — Student Grade Subject Exploration](phase-5-academic-operations/5.16-student-grade-subject-exploration.md) **P0**
 - [ ] [5.17 — Exam Schedule & Academic Calendar](phase-5-academic-operations/5.17-exam-schedule-academic-calendar.md)
 - [ ] [5.18 — Substitute Teaching & Daily Schedule Overrides](phase-5-academic-operations/5.18-substitution-daily-schedule-overrides.md)
@@ -108,7 +108,7 @@
 
 ## Phase 7 — School Extensions (CHỈ SAU KHI CHỐT PHẠM VI)
 
-> Phase này không được chen trước Task 5.15 và 5.16. Mỗi task cần quyết định
+> Phase này không được chen trước Task 5.16. Mỗi task cần quyết định
 > sản phẩm, privacy và nguồn lực vận hành của nhà trường trước khi code.
 
 - [ ] [7.1 — Student Health & Support Records](phase-7-school-extensions/7.1-student-health-support.md)
@@ -167,8 +167,9 @@
 ---
 
 > Cập nhật lần cuối: 2026-08-01
-> Trạng thái: **Task tiếp theo bắt buộc là 5.15, sau đó 5.16. Task 6.3 chờ
+> Trạng thái: **Task tiếp theo bắt buộc là 5.16. Task 6.3 chờ
 > deploy runners; Task 6.4 source/local gates pass, chờ environment secret thật.**
 >
-> Không gọi bản hiện tại là SIS production-ready trước khi Task 5.15 và 5.16
-> hoàn thành. Phase 7 là roadmap mở rộng, không phải lý do trì hoãn hai P0 này.
+> Không gọi bản hiện tại là SIS production-ready trước khi Task 5.16 và các
+> production gate còn lại hoàn thành. Phase 7 là roadmap mở rộng, không phải
+> lý do trì hoãn P0 này.
