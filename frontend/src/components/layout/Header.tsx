@@ -148,8 +148,8 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:gap-6">
-        <Link to="/" className="flex min-w-0 items-center gap-3 sm:gap-4">
+      <div className="mx-auto flex w-full max-w-7xl min-w-0 items-center justify-between gap-3 px-4 py-3 sm:gap-6">
+        <Link to="/" className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden sm:gap-4 xl:flex-none">
           <img src={logo} alt="THPT Phan Chu Trinh" className="h-12 w-12 shrink-0 object-contain md:h-14 md:w-14" />
           <div className="min-w-0 leading-tight">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">

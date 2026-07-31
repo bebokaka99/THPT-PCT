@@ -19,7 +19,7 @@ import { useAuth } from '../../stores/auth-context';
 import { useToast } from '../../stores/toast-context';
 import type {
   Assignment,
-  AssignmentSubmission,
+  AssignmentRosterItem,
 } from '../../types/assignment';
 
 function defaultDeadline() {
@@ -41,7 +41,8 @@ function deadlineForSemester(startDate: string, endDate: string) {
   return new Date(selected.getTime() - offset).toISOString().slice(0, 16);
 }
 
-function dateTime(value: string) {
+function dateTime(value: string | null) {
+  if (!value) return 'Chưa nộp';
   return new Intl.DateTimeFormat('vi-VN', {
     dateStyle: 'short',
     timeStyle: 'short',
@@ -60,6 +61,7 @@ const blankForm = () => ({
   description: '',
   dueAt: defaultDeadline(),
   allowLate: false,
+  maxScore: '',
   attachmentUrl: '',
   attachmentName: '',
 });
@@ -71,7 +73,8 @@ export function TeacherAssignmentsPage() {
   const [form, setForm] = useState(blankForm);
   const [editing, setEditing] = useState<Assignment | null>(null);
   const [selected, setSelected] = useState<Assignment | null>(null);
-  const [submissions, setSubmissions] = useState<AssignmentSubmission[]>([]);
+  const [submissions, setSubmissions] = useState<AssignmentRosterItem[]>([]);
+  const [reviewDrafts, setReviewDrafts] = useState<Record<number, { feedback: string; score: string }>>({});
   const assignments = useQuery({
     queryKey: ['teacher', 'assignments', user?.id],
     queryFn: () =>
@@ -112,6 +115,7 @@ export function TeacherAssignmentsPage() {
       description: item.description || '',
       dueAt: local.toISOString().slice(0, 16),
       allowLate: item.allow_late,
+      maxScore: item.max_score === null ? '' : String(item.max_score),
       attachmentUrl: '',
       attachmentName: '',
     });
@@ -137,6 +141,7 @@ export function TeacherAssignmentsPage() {
           description: form.description.trim() || null,
           due_at: new Date(form.dueAt).toISOString(),
           allow_late: form.allowLate,
+          max_score: form.maxScore === '' ? null : Number(form.maxScore),
           attachments,
         }),
       );
@@ -149,6 +154,7 @@ export function TeacherAssignmentsPage() {
           description: form.description.trim() || null,
           due_at: new Date(form.dueAt).toISOString(),
           allow_late: form.allowLate,
+          max_score: form.maxScore === '' ? null : Number(form.maxScore),
           attachments,
         }),
       );
@@ -195,6 +201,35 @@ export function TeacherAssignmentsPage() {
       item.id,
     );
     setSubmissions(response.data);
+    setReviewDrafts(Object.fromEntries(response.data.filter((item) => item.id).map((item) => [item.id!, {
+      feedback: item.feedback ?? '',
+      score: item.score === null ? '' : String(item.score),
+    }])));
+  }
+
+  async function review(item: AssignmentRosterItem, action: 'return' | 'grade') {
+    if (!accessToken || !item.id) return;
+    const draft = reviewDrafts[item.id] ?? { feedback: '', score: '' };
+    await mutation.mutateAsync(() => assignmentApi.reviewSubmission(accessToken, selected!.id, item.id!, {
+      action,
+      feedback: draft.feedback.trim() || null,
+      score: action === 'grade' && draft.score !== '' ? Number(draft.score) : null,
+    }));
+    await viewSubmissions(selected!);
+    toast.success(action === 'grade' ? 'Đã chấm điểm bài.' : 'Đã trả bài cho học sinh.');
+  }
+
+  async function openSubmissionFile(item: AssignmentRosterItem) {
+    if (!accessToken || !selected || !item.id || !item.current_file) return;
+    const blob = await assignmentApi.downloadSubmissionFile(
+      accessToken,
+      selected.id,
+      item.id,
+      item.current_file.id,
+    );
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 
   return (
@@ -314,6 +349,16 @@ export function TeacherAssignmentsPage() {
             </label>
             <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
               URL tệp hướng dẫn (không bắt buộc)
+              <span className="text-xs font-normal text-slate-500">Điểm tối đa (optional)</span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={form.maxScore}
+                onChange={(event) => setForm({ ...form, maxScore: event.target.value })}
+                aria-label="Điểm tối đa"
+                className="rounded-md border border-slate-300 px-3 py-2.5 font-normal"
+              />
               <input
                 value={form.attachmentUrl}
                 onChange={(event) =>
@@ -473,17 +518,52 @@ export function TeacherAssignmentsPage() {
                       </p>
                     </div>
                     {submission.current_file && (
-                      <a
-                        href={resolvePublicMediaUrl(
-                          submission.current_file.file_url,
-                        )}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => void openSubmissionFile(submission)}
                         className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700"
                       >
                         <FileText className="h-4 w-4" />
                         {submission.current_file.original_name}
-                      </a>
+                      </button>
+                    )}
+                    {submission.id && submission.status !== 'not_started' && (
+                      <div className="grid gap-2 sm:min-w-80">
+                        <textarea
+                          rows={2}
+                          placeholder="Phản hồi cho học sinh"
+                          value={reviewDrafts[submission.id]?.feedback ?? ''}
+                          onChange={(event) => setReviewDrafts({
+                            ...reviewDrafts,
+                            [submission.id!]: {
+                              ...(reviewDrafts[submission.id!] ?? { score: '' }),
+                              feedback: event.target.value,
+                            },
+                          })}
+                          className="rounded-md border border-slate-300 px-2.5 py-2 text-sm"
+                        />
+                        {selected.max_score !== null && (
+                          <input
+                            type="number"
+                            min="0"
+                            max={selected.max_score}
+                            placeholder={`Điểm / ${selected.max_score}`}
+                            value={reviewDrafts[submission.id]?.score ?? ''}
+                            onChange={(event) => setReviewDrafts({
+                              ...reviewDrafts,
+                              [submission.id!]: {
+                                ...(reviewDrafts[submission.id!] ?? { feedback: '' }),
+                                score: event.target.value,
+                              },
+                            })}
+                            className="rounded-md border border-slate-300 px-2.5 py-2 text-sm"
+                          />
+                        )}
+                        <div className="flex flex-wrap gap-2">
+                          <button type="button" onClick={() => void review(submission, 'return')} className="rounded-md border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-700">Trả bài</button>
+                          {selected.max_score !== null && <button type="button" onClick={() => void review(submission, 'grade')} className="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white">Chấm điểm</button>}
+                        </div>
+                      </div>
                     )}
                   </article>
                 ))}

@@ -6,6 +6,9 @@ import {
   getAssignment,
   listAssignments,
   listSubmissions,
+  listGuardianAssignments,
+  downloadSubmissionFile,
+  reviewSubmission,
   publishAssignment,
   removeAssignment,
   submitAssignment,
@@ -17,6 +20,7 @@ import {
   validateAssignmentListQuery,
   validateAssignmentUpdate,
   validateSubmission,
+  validateSubmissionReview,
 } from './assignment.validation.js';
 
 function user(req: Request) {
@@ -166,6 +170,56 @@ export const submitAssignmentController: RequestHandler = async (
         validateAssignmentId(req.params.id),
         validateSubmission(req.body),
         req.file,
+      ),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const reviewSubmissionController: RequestHandler = async (req, res, next) => {
+  try {
+    res.json({
+      data: await reviewSubmission(
+        user(req),
+        validateAssignmentId(req.params.id),
+        validateAssignmentId(req.params.submissionId),
+        (() => {
+          const review = validateSubmissionReview(req.body);
+          return {
+            action: review.action,
+            feedback: review.feedback ?? null,
+            score: review.score ?? null,
+          };
+        })(),
+      ),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const downloadSubmissionFileController: RequestHandler = async (req, res, next) => {
+  try {
+    const file = await downloadSubmissionFile(
+      user(req),
+      validateAssignmentId(req.params.id),
+      validateAssignmentId(req.params.submissionId),
+      validateAssignmentId(req.params.fileId),
+    );
+    res.download(file.path, file.name, { headers: { 'Content-Type': file.mimeType } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listGuardianAssignmentsController: RequestHandler = async (req, res, next) => {
+  try {
+    res.json({
+      data: await listGuardianAssignments(
+        user(req),
+        validateAssignmentId(req.params.studentId),
+        validateAssignmentListQuery(req.query),
       ),
     });
   } catch (error) {

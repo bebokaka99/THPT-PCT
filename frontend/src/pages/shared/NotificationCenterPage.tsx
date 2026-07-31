@@ -24,6 +24,7 @@ import {
   getUnreadNotificationCount,
   markAllNotificationsRead,
   markNotificationRead,
+  acknowledgeNotification,
 } from '../../services/notification.service';
 import { useAuth } from '../../stores/auth-context';
 import { useToast } from '../../stores/toast-context';
@@ -63,6 +64,16 @@ const typeDetails: Record<
     icon: FileText,
     className: 'bg-emerald-100 text-emerald-800',
   },
+  event: {
+    label: 'Sự kiện',
+    icon: Bell,
+    className: 'bg-violet-100 text-violet-700',
+  },
+  timetable: {
+    label: 'Lịch học',
+    icon: BellRing,
+    className: 'bg-orange-100 text-orange-700',
+  },
 };
 
 function parsePage(value: string | null) {
@@ -87,10 +98,12 @@ function NotificationRow({
   isPending,
   notification,
   onOpen,
+  onAcknowledge,
 }: {
   isPending: boolean;
   notification: UserNotification;
   onOpen: (notification: UserNotification) => void;
+  onAcknowledge: (notification: UserNotification) => void;
 }) {
   const details = typeDetails[notification.type];
   const Icon = details.icon;
@@ -98,7 +111,11 @@ function NotificationRow({
   return (
     <article
       className={`grid gap-4 px-4 py-5 transition sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:px-6 ${
-        notification.read_at ? 'bg-white' : 'bg-blue-50/70'
+        notification.priority === 'urgent'
+          ? 'border-l-4 border-red-500 bg-red-50/70'
+          : notification.read_at
+            ? 'bg-white'
+            : 'bg-blue-50/70'
       }`}
     >
       <span
@@ -115,6 +132,12 @@ function NotificationRow({
               Mới
             </span>
           )}
+          {notification.requires_acknowledgement && !notification.acknowledged_at && (
+            <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-bold text-white">Cần xác nhận</span>
+          )}
+          {notification.priority === 'urgent' && (
+            <span className="rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white">Khẩn</span>
+          )}
         </div>
         <p className="mt-2 text-sm leading-6 text-slate-600">
           {notification.message}
@@ -126,19 +149,13 @@ function NotificationRow({
       </div>
 
       <div className="flex items-center sm:justify-end">
-        <button
-          type="button"
-          onClick={() => onOpen(notification)}
-          disabled={isPending}
-          className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {notification.read_at ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <Check className="h-4 w-4" />
-          )}
-          {notification.related_url ? 'Mở' : notification.read_at ? 'Đã đọc' : 'Đánh dấu đã đọc'}
-        </button>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button type="button" onClick={() => onOpen(notification)} disabled={isPending} className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+            {notification.read_at ? <ChevronRight className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+            {notification.related_url ? 'Mở' : notification.read_at ? 'Đã đọc' : 'Đánh dấu đã đọc'}
+          </button>
+          {notification.requires_acknowledgement && !notification.acknowledged_at && <button type="button" onClick={() => onAcknowledge(notification)} disabled={isPending} className="inline-flex items-center gap-2 rounded-md bg-amber-500 px-3 py-2 text-sm font-bold text-white hover:bg-amber-600 disabled:opacity-60">Xác nhận</button>}
+        </div>
       </div>
     </article>
   );
@@ -189,6 +206,12 @@ export function NotificationCenterPage() {
       toast.success('Đã đánh dấu tất cả thông báo là đã đọc.');
     },
     onError: () => toast.error('Không thể đánh dấu tất cả thông báo.'),
+  });
+
+  const acknowledgeMutation = useMutation({
+    mutationFn: (id: number) => acknowledgeNotification(accessToken!, id),
+    onSuccess: refreshNotifications,
+    onError: () => toast.error('Không thể xác nhận thông báo.'),
   });
 
   const notifications = notificationsQuery.data?.data ?? [];
@@ -340,10 +363,11 @@ export function NotificationCenterPage() {
                   key={notification.id}
                   notification={notification}
                   isPending={
-                    markReadMutation.isPending &&
-                    markReadMutation.variables === notification.id
+                    (markReadMutation.isPending && markReadMutation.variables === notification.id) ||
+                    (acknowledgeMutation.isPending && acknowledgeMutation.variables === notification.id)
                   }
                   onOpen={(item) => void openNotification(item)}
+                  onAcknowledge={(item) => acknowledgeMutation.mutate(item.id)}
                 />
               ))}
             </div>

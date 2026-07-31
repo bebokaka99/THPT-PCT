@@ -15,6 +15,7 @@ const sidebarItems = [
   { label: 'Môn học & chương trình', to: '/admin/subjects' },
   { label: 'Xếp lớp học sinh', to: '/admin/enrollments' },
   { label: 'Phân công giảng dạy', to: '/admin/teaching-assignments' },
+  { label: 'Duyệt kế hoạch dạy học', to: '/admin/teaching-plans' },
   { label: 'Lịch kiểm tra & học vụ', to: '/admin/academic-calendar' },
   { label: 'Duyệt thay đổi lịch', to: '/admin/schedule-overrides' },
   { label: 'Ca học & giờ tiết', to: '/admin/timetable-settings' },
@@ -32,6 +33,7 @@ const sidebarItems = [
   { label: 'Sự kiện', to: '/admin/events' },
   { label: 'Media / Tệp tin', to: '/admin/media' },
   { label: 'Import dữ liệu', to: '/admin/importer' },
+  { label: 'Gửi thông báo', to: '/admin/communications' },
   { label: 'Tài khoản', to: '/admin/users' },
   { label: 'Lớp học', to: '/admin/classrooms' },
 ];

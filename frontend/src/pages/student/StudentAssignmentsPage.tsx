@@ -27,6 +27,8 @@ export function StudentAssignmentsPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [note, setNote] = useState('');
+  const [contentText, setContentText] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
   const assignments = useQuery({
     queryKey: ['student', 'assignments', user?.id],
     queryFn: () =>
@@ -48,12 +50,13 @@ export function StudentAssignmentsPage() {
       assignmentApi.submitAssignment(
         accessToken!,
         selectedId!,
-        file!,
-        note,
+        { file: file ?? undefined, note, content_text: contentText, link_url: linkUrl },
       ),
     onSuccess: async () => {
       setFile(null);
       setNote('');
+      setContentText('');
+      setLinkUrl('');
       toast.success('Đã lưu bài nộp. Hệ thống đã ghi nhận phiên bản mới.');
       await Promise.all([
         queryClient.invalidateQueries({
@@ -68,11 +71,25 @@ export function StudentAssignmentsPage() {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!file) {
+    if (!file && !contentText.trim() && !linkUrl.trim()) {
       toast.error('Vui lòng chọn tệp bài làm.');
       return;
     }
     submit.mutate();
+  }
+
+  async function openCurrentFile() {
+    if (!accessToken || !selectedId || !detail.data?.my_submission?.current_file) return;
+    const file = detail.data.my_submission.current_file;
+    const blob = await assignmentApi.downloadSubmissionFile(
+      accessToken,
+      selectedId,
+      detail.data.my_submission.id,
+      file.id,
+    );
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 
   return (
@@ -216,29 +233,56 @@ export function StudentAssignmentsPage() {
                       <p className="text-sm font-bold text-emerald-800">
                         Bài nộp hiện tại
                       </p>
-                      <a
-                        href={resolvePublicMediaUrl(
-                          detail.data.my_submission.current_file.file_url,
-                        )}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => void openCurrentFile()}
                         className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700"
                       >
                         <Download className="h-4 w-4" />
                         {detail.data.my_submission.current_file.original_name}
-                      </a>
+                      </button>
                       <p className="mt-1 text-xs text-emerald-700">
                         Phiên bản {detail.data.my_submission.current_file.version}{' '}
                         · {dateTime(detail.data.my_submission.last_submitted_at)}
                       </p>
                     </div>
                   )}
+                  {detail.data.my_submission?.feedback && (
+                    <div className="border border-amber-200 bg-amber-50 p-4 text-sm md:col-span-2">
+                      <p className="font-bold text-amber-900">Phản hồi của giáo viên</p>
+                      <p className="mt-1 whitespace-pre-wrap text-amber-800">
+                        {detail.data.my_submission.feedback}
+                      </p>
+                      {detail.data.my_submission.score !== null && (
+                        <p className="mt-2 font-semibold text-amber-900">
+                          Điểm: {detail.data.my_submission.score}
+                          {detail.data.max_score !== null ? `/${detail.data.max_score}` : ''}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <label className="grid gap-1.5 text-sm font-semibold text-slate-700 md:col-span-2">
+                    Nội dung bài làm (có thể để trống nếu có tệp/đường dẫn)
+                    <textarea
+                      rows={4}
+                      value={contentText}
+                      onChange={(event) => setContentText(event.target.value)}
+                      className="rounded-md border border-slate-300 px-3 py-2.5 font-normal"
+                    />
+                  </label>
+                  <label className="grid gap-1.5 text-sm font-semibold text-slate-700 md:col-span-2">
+                    Đường dẫn bài làm (http/https)
+                    <input
+                      value={linkUrl}
+                      onChange={(event) => setLinkUrl(event.target.value)}
+                      className="rounded-md border border-slate-300 px-3 py-2.5 font-normal"
+                    />
+                  </label>
                   <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
                     {detail.data.my_submission
                       ? 'Chọn tệp thay thế'
                       : 'Chọn tệp bài làm'}
                     <input
-                      required
                       type="file"
                       accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx"
                       onChange={(event) =>

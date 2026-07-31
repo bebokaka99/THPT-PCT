@@ -8,6 +8,9 @@ import {
   getAssignmentController,
   listAssignmentsController,
   listSubmissionsController,
+  listGuardianAssignmentsController,
+  downloadSubmissionFileController,
+  reviewSubmissionController,
   publishAssignmentController,
   submitAssignmentController,
   updateAssignmentController,
@@ -18,6 +21,11 @@ export const assignmentRoutes = Router();
 
 assignmentRoutes.use(requireAuth);
 assignmentRoutes.get(
+  '/guardian/students/:studentId',
+  requirePermission('assignments.read'),
+  listGuardianAssignmentsController,
+);
+assignmentRoutes.get(
   '/',
   requirePermission('assignments.read'),
   listAssignmentsController,
@@ -26,6 +34,16 @@ assignmentRoutes.post(
   '/',
   requirePermission('assignments.manage'),
   createAssignmentController,
+);
+assignmentRoutes.get(
+  '/:id/submissions/:submissionId/files/:fileId/download',
+  requirePermission('assignments.read'),
+  downloadSubmissionFileController,
+);
+assignmentRoutes.patch(
+  '/:id/submissions/:submissionId/review',
+  requirePermission('assignments.manage'),
+  reviewSubmissionController,
 );
 assignmentRoutes.get(
   '/:id/submissions',

@@ -3,6 +3,9 @@ import { HttpError } from '../../utils/http-error.js';
 import {
   createAdminNotification,
   deleteAdminNotification,
+  acknowledgeMyNotification,
+  getCommunicationOptions,
+  getNotificationDeliveryReport,
   getMyUnreadCount,
   listAdminNotifications,
   listMyNotifications,
@@ -35,6 +38,18 @@ export const markReadController: RequestHandler = async (req, res, next) => {
 
 export const markReadAllController: RequestHandler = async (req, res, next) => {
   try { await readAllMyNotifications(user(req)); res.status(204).send(); } catch (error) { next(error); }
+};
+
+export const acknowledgeController: RequestHandler = async (req, res, next) => {
+  try { await acknowledgeMyNotification(user(req), validateId(req.params.id)); res.status(204).send(); } catch (error) { next(error); }
+};
+
+export const communicationOptionsController: RequestHandler = async (req, res, next) => {
+  try { res.json({ data: await getCommunicationOptions(user(req)) }); } catch (error) { next(error); }
+};
+
+export const notificationReportController: RequestHandler = async (req, res, next) => {
+  try { res.json({ data: await getNotificationDeliveryReport(user(req), validateId(req.params.id)) }); } catch (error) { next(error); }
 };
 
 export const listNotificationsController: RequestHandler = async (req, res, next) => {

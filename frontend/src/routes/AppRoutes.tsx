@@ -175,6 +175,16 @@ const AdminUsersPage = lazy(() =>
     default: module.AdminUsersPage,
   })),
 );
+const AdminCommunicationsPage = lazy(() =>
+  import('../pages/admin/AdminCommunicationsPage').then((module) => ({
+    default: module.AdminCommunicationsPage,
+  })),
+);
+const AdminTeachingPlansPage = lazy(() =>
+  import('../pages/admin/AdminTeachingPlansPage').then((module) => ({
+    default: module.AdminTeachingPlansPage,
+  })),
+);
 const StudentDashboardPage = lazy(() =>
   import('../pages/student/StudentDashboardPage').then((module) => ({
     default: module.StudentDashboardPage,
@@ -300,6 +310,16 @@ const TeacherClassesPage = lazy(() =>
 const TeacherProfilePage = lazy(() =>
   import('../pages/teacher/TeacherProfilePage').then((module) => ({
     default: module.TeacherProfilePage,
+  })),
+);
+const TeacherCommunicationsPage = lazy(() =>
+  import('../pages/teacher/TeacherCommunicationsPage').then((module) => ({
+    default: module.TeacherCommunicationsPage,
+  })),
+);
+const TeacherTeachingPlansPage = lazy(() =>
+  import('../pages/teacher/TeacherTeachingPlansPage').then((module) => ({
+    default: module.TeacherTeachingPlansPage,
   })),
 );
 const NotificationCenterPage = lazy(() =>
@@ -561,6 +581,14 @@ export function AppRoutes() {
             element={protectedAdminPage(<AdminUserFormPage />, 'users.manage')}
           />
           <Route
+            path="/admin/communications"
+            element={protectedAdminPage(<AdminCommunicationsPage />, 'notifications.send')}
+          />
+          <Route
+            path="/admin/teaching-plans"
+            element={protectedAdminPage(<AdminTeachingPlansPage />, 'teaching_plans.review')}
+          />
+          <Route
             path="/teacher"
             element={protectedRolePage(<TeacherDashboardPage />, ['teacher', 'admin'])}
           />
@@ -645,6 +673,14 @@ export function AppRoutes() {
           <Route
             path="/teacher/profile"
             element={protectedRolePage(<TeacherProfilePage />, ['teacher', 'admin'])}
+          />
+          <Route
+            path="/teacher/communications"
+            element={protectedRolePage(<TeacherCommunicationsPage />, ['teacher', 'admin'])}
+          />
+          <Route
+            path="/teacher/teaching-plans"
+            element={protectedRolePage(<TeacherTeachingPlansPage />, ['teacher', 'admin'])}
           />
           <Route
             path="/student"

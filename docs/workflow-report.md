@@ -1,5 +1,56 @@
 # Workflow Report
 
+## 2026-08-01 - Task 5.21 Teaching Plans & Department Approval
+
+- Thêm migrations `044_create_teaching_plans.sql`,
+  `045_add_teaching_plan_links.sql` và seed quyền
+  `027_teaching_plan_permissions.sql`.
+- Kế hoạch gắn duy nhất với teaching assignment, có tuần học, version history,
+  audit và workflow draft/submitted/approved/rejected/archived.
+- Giáo viên chỉ quản lý assignment của mình; student bị từ chối; approved plan
+  bị khóa ở cả service và database trigger.
+- Backend thêm `/api/teaching-plans`; frontend thêm
+  `/teacher/teaching-plans` và `/admin/teaching-plans` cùng summary theo tổ môn.
+- Build backend/frontend, migration/seed PostgreSQL và smoke test RBAC/workflow:
+  pass.
+- Giới hạn: reviewer v1 là admin toàn trường; chưa có mapping tổ trưởng theo
+  subject group và chưa có UI picker cho các liên kết timetable/assignment/media.
+- Task tiếp theo: **5.22 - Digital Class Journal**.
+
+## 2026-08-01 - Task 5.20 Family Communication & Acknowledgements
+
+- Bổ sung PostgreSQL migration `043_family_communication_acknowledgements.sql`
+  và seed `026_family_communication_permissions.sql`.
+- Notification hỗ trợ target theo trường, role, khối, lớp hoặc danh sách user;
+  mức `normal/important/urgent`; xác nhận bắt buộc; delivered/read/acknowledged;
+  audit log và idempotent retry.
+- Teacher chỉ gửi trong lớp thuộc homeroom, teaching assignment active hoặc
+  teacher member. Student/guardian chỉ nhận bản ghi đã được gán.
+- API mới: `/api/notifications/options`,
+  `/api/notifications/me/:id/acknowledge`,
+  `/api/notifications/:id/report`; POST/list notification được mở rộng theo
+  permission `notifications.send/report`.
+- Frontend mới: `/admin/communications`, `/teacher/communications`; notification
+  center có badge urgent và nút xác nhận riêng với đánh dấu đã đọc.
+- Tự kiểm tra: backend/frontend build pass, migration/seed PostgreSQL pass,
+  smoke test scope/RBAC/read-ack/report/idempotency pass.
+- Giới hạn: chưa có email/SMS/push, lịch gửi, template hoặc export CSV.
+
+## 2026-08-01 - Task 5.19 Homework Submission & Feedback Completion
+
+- Bổ sung migration `042_complete_assignment_submissions.sql` và seed quyền
+  `assignments.read` cho guardian.
+- Học sinh có thể nộp text/link/file; trạng thái gồm submitted, late, returned,
+  graded. Giáo viên xem roster đầy đủ, trả bài, phản hồi và chấm điểm theo
+  `max_score`.
+- File submission lưu ở `backend/private-uploads/assignments`, không serve static;
+  download phải đi qua endpoint có Bearer token và kiểm tra student/teacher/admin.
+- Thêm API review, private download và guardian assignment summary. Frontend student
+  có nội dung/link tùy chọn; teacher có review controls; parent hiển thị summary.
+- Build backend/frontend, migration/seed PostgreSQL và `npm run test:assignments`: pass.
+- Giới hạn: mỗi submission có một file active; chưa có rubric, email và guardian
+  workflow chi tiết. Task tiếp theo: **5.20 - Family Communication & Acknowledgements**.
+
 ## 2026-08-01 - Task 5.18 Substitute Teaching & Daily Schedule Overrides
 
 - Thêm PostgreSQL migrations `040_create_daily_schedule_overrides.sql` và

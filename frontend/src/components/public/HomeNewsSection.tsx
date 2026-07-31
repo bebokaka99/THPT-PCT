@@ -1,208 +1,147 @@
+import { ArrowRight, CalendarDays, Newspaper } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { resolvePublicMediaUrl } from '../../lib/media-url';
 import type { Post } from '../../types/post';
+import { SectionHeading } from './SectionHeading';
 
 type HomeNewsSectionProps = {
-    posts: Post[];
+  posts: Post[];
 };
 
-function formatDate(dateString?: string) {
-    if (!dateString) return 'Đang cập nhật';
-
-    return new Intl.DateTimeFormat('vi-VN', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-    }).format(new Date(dateString));
+function formatDate(value?: string | null) {
+  if (!value) return 'Đang cập nhật';
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(value));
 }
 
-function PostImage({
-    src,
-    title,
-    large = false,
-}: {
-    src?: string | null;
-    title: string;
-    large?: boolean;
-}) {
-    const imageUrl = resolvePublicMediaUrl(src);
+function NewsImage({ post }: { post: Post }) {
+  const imageUrl = resolvePublicMediaUrl(post.cover_image_url);
 
-    if (imageUrl) {
-        return (
-            <img
-                src={imageUrl}
-                alt={title}
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-            />
-        );
-    }
-
+  if (imageUrl) {
     return (
-        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-slate-950 px-6 text-center">
-            <div>
-                <p className="text-xs font-bold uppercase tracking-[0.28em] text-blue-200">
-                    THPT Phan Chu Trinh
-                </p>
-                <p
-                    className={`${large ? 'mt-4 text-2xl' : 'mt-2 text-base'
-                        } font-bold text-white`}
-                >
-                    Tin tức đang được cập nhật
-                </p>
-            </div>
-        </div>
+      <img
+        src={imageUrl}
+        alt={post.title}
+        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+      />
     );
+  }
+
+  return (
+    <div className="flex h-full items-center justify-center bg-blue-950 px-8 text-center text-white">
+      <div>
+        <Newspaper className="mx-auto h-9 w-9 text-blue-200" />
+        <p className="mt-3 text-sm font-bold uppercase tracking-[0.16em]">
+          THPT Phan Chu Trinh
+        </p>
+      </div>
+    </div>
+  );
 }
 
 export function HomeNewsSection({ posts }: HomeNewsSectionProps) {
-    const featuredPost = posts.find((post) => post.cover_image_url) ?? posts[0];
-    const sidePosts = posts
-        .filter((post) => post.id !== featuredPost?.id)
-        .slice(0, 4);
+  const featuredPost = posts.find((post) => post.cover_image_url) ?? posts[0];
+  const latestPosts = posts
+    .filter((post) => post.id !== featuredPost?.id)
+    .slice(0, 4);
 
-    return (
-        <section className="bg-white">
-            <div className="mx-auto max-w-7xl px-4 py-14">
-                <div className="mb-8 flex flex-col gap-4 border-l-4 border-blue-700 pl-5 md:flex-row md:items-end md:justify-between">
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">
-                            Tin tức
-                        </p>
-                        <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 md:text-4xl">
-                            Tin tức & Sự kiện
-                        </h2>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                            Cập nhật những hoạt động, thông báo và sự kiện mới nhất từ nhà trường.
-                        </p>
-                    </div>
+  return (
+    <section className="bg-white">
+      <div className="mx-auto max-w-7xl px-4 py-14 md:py-16">
+        <SectionHeading
+          eyebrow="Thông tin nhà trường"
+          title="Tin tức nổi bật"
+          description="Các thông báo, hoạt động và thông tin tuyển sinh mới nhất từ nhà trường."
+          actionLabel="Xem tất cả tin tức"
+          actionTo="/tin-tuc"
+        />
 
-                    <Link
-                        to="/tin-tuc"
-                        className="inline-flex w-fit items-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-blue-600 hover:text-blue-700"
-                    >
-                        Xem tất cả →
-                    </Link>
-                </div>
-
-                {featuredPost ? (
-                    <div className="grid gap-6 lg:grid-cols-[1.45fr_0.9fr]">
-                        <Link
-                            to={`/tin-tuc/${featuredPost.slug}`}
-                            className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg"
-                        >
-                            <div className="relative h-[380px] overflow-hidden">
-                                <PostImage
-                                    src={featuredPost.cover_image_url}
-                                    title={featuredPost.title}
-                                    large
-                                />
-
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent" />
-
-                                <span className="absolute bottom-5 left-5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white shadow-lg">
-                                    Sự kiện tiêu biểu
-                                </span>
-                            </div>
-
-                            <div className="p-6">
-                                <p className="text-sm font-medium text-slate-500">
-                                    {formatDate(featuredPost.published_at ?? featuredPost.created_at)}
-                                </p>
-
-                                <h3 className="mt-3 text-2xl font-bold leading-tight text-slate-950 transition group-hover:text-blue-700 md:text-3xl">
-                                    {featuredPost.title}
-                                </h3>
-
-                                <p className="mt-4 line-clamp-3 text-sm leading-7 text-slate-600 md:text-base">
-                                    {featuredPost.excerpt}
-                                </p>
-                            </div>
-                        </Link>
-
-                        <aside className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
-                            <div className="mb-4 flex items-center justify-between gap-4 px-1">
-                                <div>
-                                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700">
-                                        Thông báo
-                                    </p>
-                                    <h3 className="mt-1 text-xl font-bold text-slate-950">
-                                        Tin mới nhất
-                                    </h3>
-                                </div>
-
-                                <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-500 shadow-sm">
-                                    {sidePosts.length} tin
-                                </span>
-                            </div>
-
-                            <div className="grid gap-3">
-                                {sidePosts.length > 0 ? (
-                                    sidePosts.map((post, index) => (
-                                        <Link
-                                            key={post.id}
-                                            to={`/tin-tuc/${post.slug}`}
-                                            className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-md"
-                                        >
-                                            <div className="flex items-start gap-4">
-                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-sm font-extrabold text-blue-700 transition group-hover:bg-blue-100">
-                                                    {String(index + 1).padStart(2, '0')}
-                                                </div>
-
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700">
-                                                        Thông báo
-                                                    </p>
-
-                                                    <h4 className="mt-2 line-clamp-2 text-base font-bold leading-6 text-slate-950 transition group-hover:text-blue-700">
-                                                        {post.title}
-                                                    </h4>
-
-                                                    <p className="mt-2 text-xs font-medium text-slate-500">
-                                                        {formatDate(post.published_at ?? post.created_at)}
-                                                    </p>
-
-                                                    {post.excerpt && (
-                                                        <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
-                                                            {post.excerpt}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))
-                                ) : (
-                                    <div className="flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-8 text-center">
-                                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
-                                            <svg
-                                                viewBox="0 0 24 24"
-                                                className="h-7 w-7"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="1.8"
-                                            >
-                                                <path d="M4 5h16v14H4z" />
-                                                <path d="M8 9h8M8 13h5" />
-                                            </svg>
-                                        </div>
-
-                                        <p className="mt-4 text-sm font-semibold text-slate-900">
-                                            Chưa có thông báo mới
-                                        </p>
-
-                                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                                            Các tin vắn mới nhất sẽ được cập nhật tại đây.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </aside>
-                    </div>
-                ) : (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
-                        Chưa có bài viết published.
-                    </div>
+        {featuredPost ? (
+          <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.8fr)]">
+            <Link
+              to={`/tin-tuc/${featuredPost.slug}`}
+              className="group overflow-hidden border border-slate-200 bg-white shadow-sm transition hover:border-blue-300 hover:shadow-md"
+            >
+              <div className="aspect-[16/9] overflow-hidden bg-slate-100">
+                <NewsImage post={featuredPost} />
+              </div>
+              <div className="p-5 md:p-7">
+                <p className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                  <CalendarDays className="h-4 w-4 text-blue-700" />
+                  {formatDate(featuredPost.published_at ?? featuredPost.created_at)}
+                </p>
+                <h3 className="mt-3 line-clamp-2 text-2xl font-extrabold leading-tight text-slate-950 transition group-hover:text-blue-700 md:text-3xl">
+                  {featuredPost.title}
+                </h3>
+                {featuredPost.excerpt && (
+                  <p className="mt-4 line-clamp-3 text-sm leading-7 text-slate-600 md:text-base">
+                    {featuredPost.excerpt}
+                  </p>
                 )}
-            </div>
-        </section>
-    );
+              </div>
+            </Link>
+
+            <aside className="border border-slate-200 bg-slate-50 p-4 md:p-5">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
+                    Cập nhật
+                  </p>
+                  <h3 className="mt-1 text-xl font-extrabold text-slate-950">
+                    Tin mới nhất
+                  </h3>
+                </div>
+                <span className="text-xs font-semibold text-slate-500">
+                  Tối đa 4 tin
+                </span>
+              </div>
+
+              <div className="divide-y divide-slate-200">
+                {latestPosts.length > 0 ? (
+                  latestPosts.map((post, index) => (
+                    <Link
+                      key={post.id}
+                      to={`/tin-tuc/${post.slug}`}
+                      className="group grid min-h-28 grid-cols-[34px_minmax(0,1fr)] gap-3 py-4"
+                    >
+                      <span className="pt-0.5 text-lg font-extrabold text-blue-200 group-hover:text-blue-700">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="line-clamp-2 text-sm font-bold leading-6 text-slate-900 transition group-hover:text-blue-700">
+                          {post.title}
+                        </span>
+                        <span className="mt-2 block text-xs text-slate-500">
+                          {formatDate(post.published_at ?? post.created_at)}
+                        </span>
+                      </span>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="py-10 text-center text-sm text-slate-500">
+                    Chưa có tin mới khác.
+                  </p>
+                )}
+              </div>
+
+              <Link
+                to="/tin-tuc"
+                className="mt-2 inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:text-blue-900"
+              >
+                Danh sách tin
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </aside>
+          </div>
+        ) : (
+          <div className="mt-8 border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-sm text-slate-500">
+            Chưa có bài viết được công bố.
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
