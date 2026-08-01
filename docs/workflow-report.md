@@ -1,5 +1,18 @@
 # Workflow Report
 
+## 2026-08-01 - Task 7.1 Student Health & Support governance gate
+
+- Audit xác nhận project có RBAC/audit patterns, private upload và encrypted
+  backup nhưng chưa có field encryption/KMS hoặc role `health_staff`.
+- Thêm `docs/student-health-support-governance.md`: scope emergency summary tối
+  thiểu, dữ liệu cấm, access matrix, HLT-001-HLT-010, technical prerequisites,
+  forbidden tests và rollout 7.1A-7.1D.
+- Viết lại task 7.1 với invariant admin không mặc định đọc health payload và role
+  đúng nhưng assignment sai/hết hạn vẫn bị chặn.
+- Không tạo migration/backend/frontend vì privacy, retention, key management và
+  operator role chưa được data owner phê duyệt. Đây là intentional safety gate,
+  không phải task implementation hoàn thành.
+
 ## 2026-08-01 - Task 6.8 Domain, SSL & Production Release (source/local gate)
 
 - Thêm production Compose overlay với Caddy edge, automatic HTTPS, HTTP redirect,

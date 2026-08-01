@@ -174,7 +174,8 @@
 > log sink, alert routing và synthetic drill production; Task 6.7 source/local
 > harness pass nhưng chờ staging fixture, capacity evidence và bottleneck rerun;
 > Task 6.8 source/local gate chờ DNS, production environment, release evidence và
-> 24h post-release review. Không tự động bắt đầu Phase 7 khi chưa có product gate.**
+> 24h post-release review. Task 7.1 governance gate đã chuẩn bị nhưng implementation
+> bị chặn chờ HLT-001-HLT-010; chưa tạo schema/API/UI dữ liệu sức khỏe.**
 >
 > Không gọi bản hiện tại là SIS production-ready trước khi các workflow Phase 5
 > thuộc phạm vi rollout và production gate còn lại hoàn thành. Phase 7 là
