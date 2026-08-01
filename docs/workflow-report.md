@@ -1,5 +1,50 @@
 # Workflow Report
 
+## 2026-08-01 - Task 6.6 Observability & Operations (source/local gate)
+
+- Tach health thanh liveness `/api/health/live`, readiness `/api/health/ready`
+  va giu endpoint `/api/health`/`/api/health/db` legacy.
+- Them request ID trace, structured request metrics, p95 latency 5 phut, error
+  fingerprint bounded khong luu message/payload, Pino redaction va Docker log
+  rotation.
+- Them admin API `/api/operations/health`, synthetic failure guard va trang
+  `/admin/system-health` de xem DB pool, process, uploads, request/error signal.
+- Smoke test observability pass: readiness, redaction PII, request trace,
+  admin-only access va synthetic 503 degraded signal.
+- Task con cho production: log/metrics sink, uptime monitor, alert routing va
+  synthetic drill schedule co owner xac nhan. Task source tiep theo:
+  **6.7 - Load & Performance Test**.
+
+## 2026-08-01 - Task 6.5 Database Backup & Restore (source/local gate)
+
+- Them bo cong cu `backup-postgres.mjs` va `restore-postgres.mjs` cho PostgreSQL,
+  public uploads va private uploads.
+- Backup tam dung backend de tao snapshot nhat quan, ma hoa AES-256-GCM, sinh
+  SHA-256 va manifest row counts; restore co checksum/authentication guard va
+  che do drill vao database co lap.
+- Them GitHub Actions workflow daily backup va weekly restore drill tren runner
+  production, kem runbook RPO 24 gio/RTO 4 gio, retention va key management.
+- Local drill pass: restore dung 63 migration records, row counts 11 bang khop,
+  wrong-key bi tu choi va Docker services van healthy sau drill.
+- Task chua danh dau hoan thanh: con can runner production, encrypted offsite
+  storage, scheduled evidence va owner xac nhan alert. Task source tiep theo:
+  **6.6 - Observability & Operations**.
+
+## 2026-08-01 - Task 5.22 Digital Class Journal
+
+- Them PostgreSQL migration `046_create_class_journals.sql` va seed permission
+  `028_class_journal_permissions.sql`.
+- Backend them module `class-journals` voi options theo ngay, list/detail, create/update,
+  audit va report journal thieu/hoan thanh/draft/cancelled/substitute.
+- Teacher chi thao tac tiet ma minh la giao vien hieu luc; substitute teacher nhan ownership
+  sau daily override published; student bi tu choi truy cap journal noi bo.
+- Admin correction bat buoc ly do, hoc ky locked/closed chan sua thong thuong, audit immutable.
+- Frontend them `/teacher/class-journal` va `/admin/class-journal`.
+- Tu kiem tra: `npm run db:setup`, backend build, frontend build va
+  `tests/class-journals.smoke.ts` pass. Smoke test da phat hien va sua loi tham so
+  report CTE; khong con du lieu test sau cleanup.
+- Task tiep theo: **6.3 - CI/CD Pipeline**.
+
 ## 2026-08-01 - Task 5.21 Teaching Plans & Department Approval
 
 - Thêm migrations `044_create_teaching_plans.sql`,

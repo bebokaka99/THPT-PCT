@@ -93,7 +93,7 @@
 - [x] [5.19 — Homework Submission & Feedback Completion](phase-5-academic-operations/5.19-homework-submission-feedback-completion.md)
 - [x] [5.20 — Family Communication & Acknowledgements](phase-5-academic-operations/5.20-family-communication-acknowledgements.md)
 - [x] [5.21 — Teaching Plans & Department Approval](phase-5-academic-operations/5.21-teaching-plans-department-approval.md)
-- [ ] [5.22 — Digital Class Journal](phase-5-academic-operations/5.22-digital-class-journal.md)
+- [x] [5.22 — Digital Class Journal](phase-5-academic-operations/5.22-digital-class-journal.md)
 
 ## Phase 6 — Production Preparation
 
@@ -167,8 +167,11 @@
 ---
 
 > Cập nhật lần cuối: 2026-08-01
-> Trạng thái: **Task tiếp theo là 5.22. Task 6.3 chờ
-> deploy runners; Task 6.4 source/local gates pass, chờ environment secret thật.**
+> Trạng thái: **Task source tiếp theo là 6.7. Task 6.3 chờ deploy runners;
+> Task 6.4 source/local gates pass nhưng chờ environment secret thật; Task 6.5
+> source/local restore drill pass nhưng chờ production schedule, offsite storage
+> và alert evidence; Task 6.6 source/local observability pass nhưng chờ uptime,
+> log sink, alert routing và synthetic drill production.**
 >
 > Không gọi bản hiện tại là SIS production-ready trước khi các workflow Phase 5
 > thuộc phạm vi rollout và production gate còn lại hoàn thành. Phase 7 là

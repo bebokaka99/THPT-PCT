@@ -1,0 +1,100 @@
+name: PostgreSQL Backup and Restore Drill
+
+on:
+  schedule:
+    - cron: "15 19 * * *"
+    - cron: "0 20 * * 6"
+  workflow_dispatch:
+    inputs:
+      run_restore_drill:
+        description: Restore the new backup into an isolated database and verify row counts
+        required: true
+        default: true
+        type: boolean
+
+concurrency:
+  group: production-backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Encrypted backup and integrity verification
+    runs-on:
+      - self-hosted
+      - linux
+      - production
+    environment: production-backup
+    timeout-minutes: 45
+    env:
+      BACKUP_ROOT: ${{ vars.BACKUP_ROOT }}
+      BACKUP_RETENTION_DAYS: ${{ vars.BACKUP_RETENTION_DAYS }}
+      DEPLOY_PROJECT_NAME: ${{ vars.DEPLOY_PROJECT_NAME }}
+      BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+    steps:
+      - name: Checkout release operations source
+        uses: actions/checkout@v6
+
+      - name: Validate runner backup configuration
+        shell: bash
+        run: |
+          test -n "$BACKUP_ROOT"
+          test "${BACKUP_ROOT#/}" != "$BACKUP_ROOT"
+          test -n "$BACKUP_ENCRYPTION_KEY"
+          command -v docker
+          command -v node
+
+      - name: Materialize protected Compose environment
+        shell: bash
+        env:
+          BACKUP_ENV_B64: ${{ secrets.BACKUP_ENV_B64 }}
+        run: |
+          test -n "$BACKUP_ENV_B64"
+          env_file="$RUNNER_TEMP/thpt-pct-pt-backup.env"
+          umask 077
+          printf '%s' "$BACKUP_ENV_B64" | base64 --decode > "$env_file"
+          test -s "$env_file"
+          echo "BACKUP_ENV_FILE=$env_file" >> "$GITHUB_ENV"
+
+      - name: Create encrypted consistent backup
+        id: backup
+        shell: bash
+        run: |
+          output="$({ node tools/backup-postgres.mjs \
+            --env-file "$BACKUP_ENV_FILE" \
+            --project-name "${DEPLOY_PROJECT_NAME:-thpt-pct-pt-production}" \
+            --output-dir "$BACKUP_ROOT" \
+            --retention-days "${BACKUP_RETENTION_DAYS:-30}"; } 2>&1)"
+          printf '%s\n' "$output"
+          backup_directory="$(printf '%s\n' "$output" | sed -n 's/^BACKUP_DIRECTORY=//p' | tail -n 1)"
+          test -n "$backup_directory"
+          echo "directory=$backup_directory" >> "$GITHUB_OUTPUT"
+
+      - name: Verify backup artifacts
+        shell: bash
+        run: |
+          node tools/restore-postgres.mjs \
+            --backup-dir "${{ steps.backup.outputs.directory }}" \
+            --env-file "$BACKUP_ENV_FILE" \
+            --project-name "${DEPLOY_PROJECT_NAME:-thpt-pct-pt-production}" \
+            --verify-only
+
+      - name: Weekly or requested isolated restore drill
+        if: >-
+          github.event.schedule == '0 20 * * 6' ||
+          (github.event_name == 'workflow_dispatch' && inputs.run_restore_drill)
+        shell: bash
+        run: |
+          node tools/restore-postgres.mjs \
+            --backup-dir "${{ steps.backup.outputs.directory }}" \
+            --env-file "$BACKUP_ENV_FILE" \
+            --project-name "${DEPLOY_PROJECT_NAME:-thpt-pct-pt-production}" \
+            --target-db "thpt_pct_restore_${GITHUB_RUN_ID}" \
+            --drop-target-after-verify
+
+      - name: Remove temporary Compose environment
+        if: always() && env.BACKUP_ENV_FILE != ''
+        shell: bash
+        run: rm -f -- "$BACKUP_ENV_FILE"

@@ -3,6 +3,7 @@ import multer from 'multer';
 import { env } from '../config/env.js';
 import { HttpError } from '../utils/http-error.js';
 import { logger } from '../utils/logger.js';
+import { recordOperationalError } from '../utils/operational-metrics.js';
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) {
@@ -37,9 +38,19 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
   const canExposeMessage =
     statusCode < 500 || error instanceof HttpError || !env.isProduction;
   const message = canExposeMessage ? rawMessage : 'Internal server error';
+  const safePath = req.originalUrl.split('?', 1)[0] || '/';
+
+  if (statusCode >= 500) {
+    recordOperationalError({
+      occurred_at: new Date().toISOString(),
+      request_id: req.requestId,
+      path: safePath,
+      status_code: statusCode,
+      error_name: error instanceof Error ? error.name : 'UnknownError',
+    });
+  }
 
   if (!env.isProduction || statusCode >= 500) {
-    const safePath = req.originalUrl.split('?', 1)[0] || '/';
     const logDetails = {
       requestId: req.requestId,
       method: req.method,

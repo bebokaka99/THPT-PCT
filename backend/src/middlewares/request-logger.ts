@@ -1,5 +1,6 @@
 import type { RequestHandler } from 'express';
 import { logger } from '../utils/logger.js';
+import { beginRequestMeasurement } from '../utils/operational-metrics.js';
 
 export function getRequestLogPath(path: string) {
   return path.split('?', 1)[0] || '/';
@@ -7,8 +8,11 @@ export function getRequestLogPath(path: string) {
 
 export const requestLogger: RequestHandler = (req, res, next) => {
   const startedAt = process.hrtime.bigint();
+  const measurement = beginRequestMeasurement();
+  let finished = false;
 
   res.on('finish', () => {
+    finished = true;
     const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
     const path = getRequestLogPath(req.originalUrl);
     const log = {
@@ -18,6 +22,7 @@ export const requestLogger: RequestHandler = (req, res, next) => {
       statusCode: res.statusCode,
       durationMs: Number(durationMs.toFixed(2)),
     };
+    measurement.finish(res.statusCode, durationMs);
 
     if (res.statusCode >= 500) {
       logger.error(log, `${req.method} ${path} ${res.statusCode}`);
@@ -26,6 +31,10 @@ export const requestLogger: RequestHandler = (req, res, next) => {
     } else {
       logger.info(log, `${req.method} ${path} ${res.statusCode}`);
     }
+  });
+
+  res.on('close', () => {
+    if (!finished) measurement.abort();
   });
 
   next();
