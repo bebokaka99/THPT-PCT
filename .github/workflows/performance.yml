@@ -1,0 +1,94 @@
+name: Staging Performance Baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      concurrency:
+        description: Concurrent workers
+        required: true
+        default: '10'
+        type: string
+      requests:
+        description: Total read requests
+        required: true
+        default: '300'
+        type: string
+      max_p95_ms:
+        description: Maximum accepted p95 latency in milliseconds
+        required: true
+        default: '750'
+        type: string
+      authenticated:
+        description: Include the configured staging authenticated routes
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: staging-performance
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  read-baseline:
+    name: Approved staging read baseline
+    runs-on:
+      - self-hosted
+      - linux
+      - staging
+    environment: staging-performance
+    timeout-minutes: 30
+    env:
+      LOAD_TEST_BASE_URL: ${{ vars.PERFORMANCE_BASE_URL }}
+      LOAD_TEST_CONCURRENCY: ${{ inputs.concurrency }}
+      LOAD_TEST_REQUESTS: ${{ inputs.requests }}
+      LOAD_TEST_MAX_P95_MS: ${{ inputs.max_p95_ms }}
+      LOAD_TEST_MAX_ERROR_RATE_PERCENT: '1'
+      LOAD_TEST_REPORT_PATH: performance-report.json
+      LOAD_TEST_AUTH_ROUTES: ${{ vars.PERFORMANCE_AUTH_ROUTES }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.23.1'
+
+      - name: Validate approved staging target
+        shell: bash
+        env:
+          PERFORMANCE_TARGET_APPROVED: ${{ vars.PERFORMANCE_TARGET_APPROVED }}
+        run: |
+          test "$PERFORMANCE_TARGET_APPROVED" = "true"
+          case "$LOAD_TEST_BASE_URL" in
+            https://*/api) ;;
+            *) echo "PERFORMANCE_BASE_URL must be an approved HTTPS /api target" >&2; exit 1 ;;
+          esac
+
+      - name: Configure optional staging identity
+        if: inputs.authenticated
+        shell: bash
+        env:
+          PERFORMANCE_IDENTIFIER: ${{ secrets.PERFORMANCE_IDENTIFIER }}
+          PERFORMANCE_PASSWORD: ${{ secrets.PERFORMANCE_PASSWORD }}
+        run: |
+          test -n "$PERFORMANCE_IDENTIFIER"
+          test -n "$PERFORMANCE_PASSWORD"
+          echo "LOAD_TEST_IDENTIFIER=$PERFORMANCE_IDENTIFIER" >> "$GITHUB_ENV"
+          echo "LOAD_TEST_PASSWORD=$PERFORMANCE_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Run read-only performance baseline
+        shell: bash
+        run: node tools/load-test.mjs
+
+      - name: Upload performance report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: staging-performance-${{ github.run_id }}
+          path: performance-report.json
+          if-no-files-found: error
+          retention-days: 30

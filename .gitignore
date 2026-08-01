@@ -9,6 +9,7 @@ dist/
 build/
 coverage/
 backups/
+tools/load-tests/reports/
 .local/
 *.tsbuildinfo
 frontend/vite.config.js

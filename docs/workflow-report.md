@@ -1,5 +1,23 @@
 # Workflow Report
 
+## 2026-08-01 - Task 6.7 Load & Performance Test (source/local gate)
+
+- Them `tools/load-test.mjs` bang Node native fetch/FormData, khong them package.
+- Harness mac dinh test read mix public: health, categories, posts, documents,
+  search; ho tro authenticated routes, login benchmark, media upload cleanup va
+  gradebook optimistic-lock test khi bat co.
+- Report JSON co concurrency, p50/p95/p99, status distribution, error rate va
+  target gate p95 <= 750ms/error rate <= 1% cho local/staging baseline.
+- Them docs `docs/load-performance-test.md` va
+  `tools/load-tests/README.md`.
+- Local read/runtime source gate da pass tren Docker stack; staging benchmark,
+  data corruption proof va bottleneck rerun con cho fixture/owner phe duyet.
+- Baseline local: public p95 82.95ms, authenticated p95 115.1ms, login p95
+  257.74ms, media upload p95 195.62ms; error 0%, cleanup upload 5/5, DB pool
+  waiting 0 va 5xx 0. Gradebook write load chua chay khi chua co fixture co lap.
+- Task source tiep theo: **6.8 - Domain, SSL & Production Release** sau khi
+  staging performance evidence duoc phe duyet.
+
 ## 2026-08-01 - Task 6.6 Observability & Operations (source/local gate)
 
 - Tach health thanh liveness `/api/health/live`, readiness `/api/health/ready`
