@@ -120,6 +120,11 @@ const AdminDashboardPage = lazy(() =>
     default: module.AdminDashboardPage,
   })),
 );
+const AdminSystemHealthPage = lazy(() =>
+  import('../pages/admin/AdminSystemHealthPage').then((module) => ({
+    default: module.AdminSystemHealthPage,
+  })),
+);
 const AdminDocumentFormPage = lazy(() =>
   import('../pages/admin/AdminDocumentFormPage').then((module) => ({
     default: module.AdminDocumentFormPage,
@@ -406,6 +411,10 @@ export function AppRoutes() {
           <Route
             path="/admin"
             element={protectedAdminPage(<AdminDashboardPage />, 'dashboard.read')}
+          />
+          <Route
+            path="/admin/system-health"
+            element={protectedAdminPage(<AdminSystemHealthPage />, 'dashboard.read')}
           />
           <Route
             path="/admin/academic-periods"

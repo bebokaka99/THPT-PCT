@@ -10,6 +10,7 @@ type AdminLayoutProps = {
 const sidebarItems = [
   { label: 'Tài khoản học sinh', to: '/admin/users/bulk-students' },
   { label: 'Tổng quan', to: '/admin', end: true },
+  { label: 'Sức khỏe hệ thống', to: '/admin/system-health' },
   { label: 'Năm học & học kỳ', to: '/admin/academic-periods' },
   { label: 'Import / Báo cáo học vụ', to: '/admin/academic-operations' },
   { label: 'Môn học & chương trình', to: '/admin/subjects' },

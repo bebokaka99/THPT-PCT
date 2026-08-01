@@ -4,7 +4,6 @@ import helmet from 'helmet';
 import path from 'node:path';
 import { env, validateApplicationEnvironment } from './config/env.js';
 import { apiRateLimiter, corsOptions } from './config/security.js';
-import { checkDatabaseConnection } from './database/postgres.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { requestIdMiddleware } from './middlewares/request-id.middleware.js';
 import { requestLogger } from './middlewares/request-logger.js';
@@ -25,8 +24,10 @@ import { gradebookRoutes } from './modules/gradebooks/gradebook.routes.js';
 import { guardianRoutes } from './modules/guardians/guardian.routes.js';
 import { enrollmentRoutes } from './modules/enrollments/enrollment.routes.js';
 import { importerRoutes } from './modules/importer/importer.routes.js';
+import { healthRoutes } from './modules/health/health.routes.js';
 import { mediaRoutes } from './modules/media/media.routes.js';
 import { notificationRoutes } from './modules/notifications/notification.routes.js';
+import { operationRoutes } from './modules/operations/operation.routes.js';
 import { postRoutes } from './modules/posts/post.routes.js';
 import { profileRoutes } from './modules/profiles/profile.routes.js';
 import { roleRoutes } from './modules/roles/role.routes.js';
@@ -75,26 +76,7 @@ app.use(
 );
 app.use('/api', apiRateLimiter);
 
-app.get('/api/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'THPT-PCT-PT API is running',
-  });
-});
-
-app.get('/api/health/db', async (_req, res, next) => {
-  try {
-    await checkDatabaseConnection();
-
-    res.json({
-      status: 'ok',
-      database: 'connected',
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
+app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/academic-periods', academicPeriodRoutes);
 app.use('/api/academic-operations', academicOperationRoutes);
@@ -114,6 +96,7 @@ app.use('/api/guardians', guardianRoutes);
 app.use('/api/importer', importerRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/operations', operationRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/roles', roleRoutes);

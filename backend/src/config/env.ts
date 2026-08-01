@@ -285,6 +285,12 @@ export const env = {
       },
     ),
   },
+  operations: {
+    syntheticFailureEnabled: readBoolean(
+      'OPERATIONS_SYNTHETIC_FAILURE_ENABLED',
+      appEnv !== 'production',
+    ),
+  },
 } as const;
 
 export function validateApplicationEnvironment() {

@@ -1,5 +1,20 @@
 # Workflow Report
 
+## 2026-08-01 - Task 6.6 Observability & Operations (source/local gate)
+
+- Tach health thanh liveness `/api/health/live`, readiness `/api/health/ready`
+  va giu endpoint `/api/health`/`/api/health/db` legacy.
+- Them request ID trace, structured request metrics, p95 latency 5 phut, error
+  fingerprint bounded khong luu message/payload, Pino redaction va Docker log
+  rotation.
+- Them admin API `/api/operations/health`, synthetic failure guard va trang
+  `/admin/system-health` de xem DB pool, process, uploads, request/error signal.
+- Smoke test observability pass: readiness, redaction PII, request trace,
+  admin-only access va synthetic 503 degraded signal.
+- Task con cho production: log/metrics sink, uptime monitor, alert routing va
+  synthetic drill schedule co owner xac nhan. Task source tiep theo:
+  **6.7 - Load & Performance Test**.
+
 ## 2026-08-01 - Task 6.5 Database Backup & Restore (source/local gate)
 
 - Them bo cong cu `backup-postgres.mjs` va `restore-postgres.mjs` cho PostgreSQL,
