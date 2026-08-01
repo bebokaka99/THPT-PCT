@@ -167,8 +167,10 @@
 ---
 
 > Cập nhật lần cuối: 2026-08-01
-> Trạng thái: **Task tiếp theo là 6.3. Task 6.3 chờ
-> deploy runners; Task 6.4 source/local gates pass, chờ environment secret thật.**
+> Trạng thái: **Task source tiếp theo là 6.6. Task 6.3 chờ deploy runners;
+> Task 6.4 source/local gates pass nhưng chờ environment secret thật; Task 6.5
+> source/local restore drill pass nhưng chờ production schedule, offsite storage
+> và alert evidence.**
 >
 > Không gọi bản hiện tại là SIS production-ready trước khi các workflow Phase 5
 > thuộc phạm vi rollout và production gate còn lại hoàn thành. Phase 7 là

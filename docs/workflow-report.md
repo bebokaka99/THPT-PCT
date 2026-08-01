@@ -1,5 +1,20 @@
 # Workflow Report
 
+## 2026-08-01 - Task 6.5 Database Backup & Restore (source/local gate)
+
+- Them bo cong cu `backup-postgres.mjs` va `restore-postgres.mjs` cho PostgreSQL,
+  public uploads va private uploads.
+- Backup tam dung backend de tao snapshot nhat quan, ma hoa AES-256-GCM, sinh
+  SHA-256 va manifest row counts; restore co checksum/authentication guard va
+  che do drill vao database co lap.
+- Them GitHub Actions workflow daily backup va weekly restore drill tren runner
+  production, kem runbook RPO 24 gio/RTO 4 gio, retention va key management.
+- Local drill pass: restore dung 63 migration records, row counts 11 bang khop,
+  wrong-key bi tu choi va Docker services van healthy sau drill.
+- Task chua danh dau hoan thanh: con can runner production, encrypted offsite
+  storage, scheduled evidence va owner xac nhan alert. Task source tiep theo:
+  **6.6 - Observability & Operations**.
+
 ## 2026-08-01 - Task 5.22 Digital Class Journal
 
 - Them PostgreSQL migration `046_create_class_journals.sql` va seed permission
