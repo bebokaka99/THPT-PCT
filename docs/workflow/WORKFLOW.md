@@ -176,7 +176,8 @@
 > Task 6.8 source/local gate chờ DNS, production environment, release evidence và
 > 24h post-release review. Task 7.1 governance gate đã chuẩn bị nhưng implementation
 > bị chặn chờ HLT-001-HLT-010; Task 7.2 governance gate chờ ADM-001-ADM-012,
-> applicant identity, anti-abuse và private malware-scanned storage.**
+> applicant identity, anti-abuse và private malware-scanned storage; Task 7.3
+> governance gate chờ FIN-001-FIN-014, finance/legal roles và provider contract.**
 >
 > Không gọi bản hiện tại là SIS production-ready trước khi các workflow Phase 5
 > thuộc phạm vi rollout và production gate còn lại hoàn thành. Phase 7 là

@@ -1,5 +1,17 @@
 # Workflow Report
 
+## 2026-08-01 - Task 7.3 Fees, Receipts & Reconciliation governance gate
+
+- Audit xác nhận chưa có finance domain; có thể tái sử dụng transaction,
+  idempotency, optimistic revision, audit và verified guardian link patterns.
+- Thêm `docs/fees-payments-governance.md`: FIN-001-FIN-014, classification,
+  immutable ledger/maker-checker invariants, reconciliation contract, forbidden
+  tests và rollout 7.3A-7.3D.
+- Scope khuyến nghị bắt đầu bằng charge management/view-only; online payment tách
+  riêng sau khi có provider, webhook security và legal receipt policy.
+- Không tạo migration/API/payment UI vì finance/legal/provider gate chưa được
+  duyệt. Task 7.3 master vẫn chưa hoàn thành.
+
 ## 2026-08-01 - Task 7.2 Online Admissions governance gate
 
 - Audit xác nhận có thể tái sử dụng enrollment transaction patterns và student
