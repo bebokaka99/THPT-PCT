@@ -33,6 +33,12 @@ fi
 current_release="$(tr -d '[:space:]' < "$current_file")"
 previous_release="$(tr -d '[:space:]' < "$previous_file")"
 release_file="$state_directory/releases/$previous_release.env"
+compose_files=(-f docker-compose.yml)
+services=(backend frontend)
+if [[ "$environment_name" == "production" ]]; then
+  compose_files+=(-f docker-compose.production.yml)
+  services+=(edge)
+fi
 
 if [[ ! "$previous_release" =~ ^[0-9a-f]{40}$ || ! -f "$release_file" ]]; then
   echo "Previous release state is invalid or its image manifest is missing." >&2
@@ -41,6 +47,7 @@ fi
 
 compose=(
   docker compose
+  "${compose_files[@]}"
   --project-name "thpt-pct-pt-$environment_name"
   --env-file "$env_file"
   --env-file "$release_file"
@@ -49,9 +56,9 @@ compose=(
 cd "$project_root"
 "${compose[@]}" config --quiet
 if [[ "${DEPLOY_SKIP_PULL:-false}" != "true" ]]; then
-  "${compose[@]}" pull backend frontend
+  "${compose[@]}" pull "${services[@]}"
 fi
-"${compose[@]}" up -d --no-build backend frontend
+"${compose[@]}" up -d --no-build "${services[@]}"
 
 printf '%s\n' "$previous_release" > "$current_file"
 printf '%s\n' "$current_release" > "$previous_file"

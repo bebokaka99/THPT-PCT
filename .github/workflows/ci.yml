@@ -128,6 +128,43 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v6
 
+      - name: Validate production edge and environment contract
+        shell: bash
+        run: |
+          env_file="$RUNNER_TEMP/thpt-pct-pt-production.env"
+          cat > "$env_file" <<'EOF'
+          APP_ENV=production
+          APP_ORIGIN=https://portal.example.edu.vn
+          APP_DOMAIN=portal.example.edu.vn
+          CADDY_IMAGE=caddy:2.11.4-alpine
+          POSTGRES_DB=thpt_pct_pt
+          POSTGRES_USER=thpt_pct_pt
+          POSTGRES_PASSWORD=ci_database_password_32_chars
+          POSTGRES_IMAGE=ghcr.io/example/thpt-pct-postgres:0000000000000000000000000000000000000000
+          JWT_SECRET=ci_jwt_secret_with_more_than_32_characters
+          COOKIE_SECURE=true
+          COOKIE_SAME_SITE=strict
+          FRONTEND_BIND_ADDRESS=127.0.0.1
+          EOF
+          node tools/check-production-config.mjs --env-file "$env_file"
+          docker compose \
+            --env-file "$env_file" \
+            -f docker-compose.yml \
+            -f docker-compose.production.yml \
+            config --quiet
+          docker run --rm \
+            --env APP_DOMAIN=portal.example.edu.vn \
+            --volume "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2.11.4-alpine \
+            caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+          DEPLOY_VALIDATE_ONLY=true \
+          DEPLOY_STATE_ROOT="$RUNNER_TEMP/release-state" \
+            bash tools/deploy-release.sh \
+              production \
+              "$GITHUB_SHA" \
+              ghcr.io/example/thpt-pct \
+              "$env_file"
+
       - name: Resolve immutable image names
         id: images
         shell: bash
@@ -163,7 +200,8 @@ jobs:
           for image in \
             "${{ steps.images.outputs.backend }}" \
             "${{ steps.images.outputs.frontend }}" \
-            "${{ steps.images.outputs.postgres }}"
+            "${{ steps.images.outputs.postgres }}" \
+            "caddy:2.11.4-alpine"
           do
             docker run --rm \
               --volume /var/run/docker.sock:/var/run/docker.sock \
@@ -182,7 +220,8 @@ jobs:
           for image in \
             "${{ steps.images.outputs.backend }}" \
             "${{ steps.images.outputs.frontend }}" \
-            "${{ steps.images.outputs.postgres }}"
+            "${{ steps.images.outputs.postgres }}" \
+            "caddy:2.11.4-alpine"
           do
             metadata="$(docker inspect --format '{{json .Config.Env}}' "$image")"
             if printf '%s' "$metadata" | grep -Eq \
@@ -218,7 +257,8 @@ jobs:
             "run_id": "${GITHUB_RUN_ID}",
             "backend_image": "${{ steps.images.outputs.backend }}",
             "frontend_image": "${{ steps.images.outputs.frontend }}",
-            "postgres_image": "${{ steps.images.outputs.postgres }}"
+            "postgres_image": "${{ steps.images.outputs.postgres }}",
+            "edge_image": "caddy:2.11.4-alpine"
           }
           EOF
 

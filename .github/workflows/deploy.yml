@@ -101,6 +101,7 @@ jobs:
               "$RELEASE_SHA" \
               "${{ steps.images.outputs.prefix }}" \
               "$DEPLOY_ENV_FILE"
+            echo "DEPLOY_COMPLETED=true" >> "$GITHUB_ENV"
           fi
 
       - name: Smoke staging
@@ -108,7 +109,7 @@ jobs:
         run: bash tools/smoke-deployment.sh "$APP_URL"
 
       - name: Roll back failed staging deployment
-        if: failure() && env.DEPLOY_ACTION == 'deploy' && env.DEPLOY_ENV_FILE != ''
+        if: failure() && env.DEPLOY_ACTION == 'deploy' && env.DEPLOY_COMPLETED == 'true' && env.DEPLOY_ENV_FILE != ''
         shell: bash
         run: bash tools/rollback-release.sh staging "$DEPLOY_ENV_FILE"
 
@@ -133,6 +134,7 @@ jobs:
       DEPLOY_ACTION: ${{ inputs.action }}
       DEPLOY_STATE_ROOT: ${{ vars.DEPLOY_STATE_ROOT }}
       APP_URL: ${{ vars.APP_URL }}
+      BACKUP_ROOT: ${{ vars.BACKUP_ROOT }}
     steps:
       - name: Validate production request
         shell: bash
@@ -166,7 +168,31 @@ jobs:
           umask 077
           printf '%s' "$DEPLOY_ENV_B64" | base64 --decode > "$env_file"
           test -s "$env_file"
-          echo "DEPLOY_ENV_FILE=$env_file" >> "$GITHUB_ENV"
+          {
+            echo "DEPLOY_ENV_FILE=$env_file"
+            echo "RELEASE_REPORT_PATH=$RUNNER_TEMP/production-readiness.json"
+          } >> "$GITHUB_ENV"
+
+      - name: Validate production environment contract
+        if: env.DEPLOY_ACTION == 'deploy'
+        shell: bash
+        run: node tools/check-production-config.mjs --env-file "$DEPLOY_ENV_FILE"
+
+      - name: Create encrypted pre-release backup
+        if: env.DEPLOY_ACTION == 'deploy'
+        shell: bash
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          if [ -z "$BACKUP_ROOT" ]; then
+            echo "BACKUP_ROOT is required in the production environment." >&2
+            exit 1
+          fi
+          node tools/backup-postgres.mjs \
+            --env-file "$DEPLOY_ENV_FILE" \
+            --project-name thpt-pct-pt-production \
+            --output-dir "$BACKUP_ROOT" \
+            --retention-days 30
 
       - name: Resolve image prefix
         id: images
@@ -187,16 +213,46 @@ jobs:
               "$RELEASE_SHA" \
               "${{ steps.images.outputs.prefix }}" \
               "$DEPLOY_ENV_FILE"
+            echo "DEPLOY_COMPLETED=true" >> "$GITHUB_ENV"
           fi
 
       - name: Smoke production
         shell: bash
         run: bash tools/smoke-deployment.sh "$APP_URL"
 
+      - name: Verify domain TLS and production headers
+        if: env.DEPLOY_ACTION == 'deploy'
+        shell: bash
+        run: |
+          node tools/check-production-readiness.mjs \
+            --url "$APP_URL" \
+            --report "$RELEASE_REPORT_PATH"
+
+      - name: Smoke admin teacher and student access
+        if: env.DEPLOY_ACTION == 'deploy'
+        shell: bash
+        env:
+          SMOKE_ADMIN_EMAIL: ${{ secrets.SMOKE_ADMIN_EMAIL }}
+          SMOKE_ADMIN_PASSWORD: ${{ secrets.SMOKE_ADMIN_PASSWORD }}
+          SMOKE_TEACHER_EMAIL: ${{ secrets.SMOKE_TEACHER_EMAIL }}
+          SMOKE_TEACHER_PASSWORD: ${{ secrets.SMOKE_TEACHER_PASSWORD }}
+          SMOKE_STUDENT_EMAIL: ${{ secrets.SMOKE_STUDENT_EMAIL }}
+          SMOKE_STUDENT_PASSWORD: ${{ secrets.SMOKE_STUDENT_PASSWORD }}
+        run: node tools/smoke-role-access.mjs --base-url "$APP_URL"
+
       - name: Roll back failed production deployment
-        if: failure() && env.DEPLOY_ACTION == 'deploy' && env.DEPLOY_ENV_FILE != ''
+        if: failure() && env.DEPLOY_ACTION == 'deploy' && env.DEPLOY_COMPLETED == 'true' && env.DEPLOY_ENV_FILE != ''
         shell: bash
         run: bash tools/rollback-release.sh production "$DEPLOY_ENV_FILE"
+
+      - name: Upload production readiness evidence
+        if: always() && env.DEPLOY_ACTION == 'deploy'
+        uses: actions/upload-artifact@v6
+        with:
+          name: production-readiness-${{ env.RELEASE_SHA }}
+          path: ${{ env.RELEASE_REPORT_PATH }}
+          if-no-files-found: warn
+          retention-days: 90
 
       - name: Remove production deployment environment
         if: always() && env.DEPLOY_ENV_FILE != ''

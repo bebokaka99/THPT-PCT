@@ -36,15 +36,31 @@ fi
 state_directory="$state_root/$environment_name"
 release_directory="$state_directory/releases"
 release_file="$release_directory/$release_sha.env"
+caddy_config_file="$release_directory/$release_sha.Caddyfile"
 current_file="$state_directory/current-release"
 previous_file="$state_directory/previous-release"
 project_name="thpt-pct-pt-$environment_name"
+compose_files=(-f docker-compose.yml)
+services=(backend frontend)
+if [[ "$environment_name" == "production" ]]; then
+  compose_files+=(-f docker-compose.production.yml)
+  services+=(edge)
+fi
 
 mkdir -p "$release_directory"
 cat > "$release_file" <<EOF
 BACKEND_IMAGE=${image_prefix}-backend:${release_sha}
 FRONTEND_IMAGE=${image_prefix}-frontend:${release_sha}
 EOF
+if [[ "$environment_name" == "production" ]]; then
+  if [[ ! -f "$project_root/deploy/Caddyfile" ]]; then
+    echo "Production Caddyfile is missing from the release source." >&2
+    exit 1
+  fi
+  cp "$project_root/deploy/Caddyfile" "$caddy_config_file"
+  chmod 0444 "$caddy_config_file"
+  printf 'CADDY_CONFIG_PATH=%s\n' "$caddy_config_file" >> "$release_file"
+fi
 
 if [[ -f "$current_file" ]]; then
   current_release="$(tr -d '[:space:]' < "$current_file")"
@@ -55,6 +71,7 @@ fi
 
 compose=(
   docker compose
+  "${compose_files[@]}"
   --project-name "$project_name"
   --env-file "$env_file"
   --env-file "$release_file"
@@ -62,10 +79,14 @@ compose=(
 
 cd "$project_root"
 "${compose[@]}" config --quiet
-if [[ "${DEPLOY_SKIP_PULL:-false}" != "true" ]]; then
-  "${compose[@]}" pull backend frontend
+if [[ "${DEPLOY_VALIDATE_ONLY:-false}" == "true" ]]; then
+  echo "Validated $environment_name release $release_sha without deploying services."
+  exit 0
 fi
-"${compose[@]}" up -d --no-build backend frontend
+if [[ "${DEPLOY_SKIP_PULL:-false}" != "true" ]]; then
+  "${compose[@]}" pull "${services[@]}"
+fi
+"${compose[@]}" up -d --no-build "${services[@]}"
 printf '%s\n' "$release_sha" > "$current_file"
 
 echo "Deployed $environment_name release $release_sha."

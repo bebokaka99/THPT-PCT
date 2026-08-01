@@ -1,5 +1,26 @@
 # Workflow Report
 
+## 2026-08-01 - Task 6.8 Domain, SSL & Production Release (source/local gate)
+
+- Thêm production Compose overlay với Caddy edge, automatic HTTPS, HTTP redirect,
+  HSTS và reverse proxy tới frontend nội bộ.
+- Thêm production config checker, DNS/TLS/header readiness checker và
+  business-read-only smoke theo admin/teacher/student có logout cleanup.
+- Production workflow bắt buộc encrypted backup trước deploy, lưu readiness
+  artifact và chỉ rollback tự động nếu deployment đã thực sự hoàn tất.
+- Thêm `docs/production-release.md`: DNS/firewall, GitHub Environment, secret,
+  cutover, rollback, 24h monitoring và ownership.
+- Local evidence: production env self-test pass 1 valid/5 invalid fixtures;
+  Compose overlay, Caddyfile và deploy validate-only valid; readiness qua local proxy pass; business-read-only
+  admin/teacher/student smoke pass và teacher/student users API trả 403.
+- `db:setup` và backend quality pass trên PostgreSQL 18 cô lập; frontend build
+  pass. `.env.docker` local hiện drift password với demo volume (`28P01`) nên
+  không được dùng làm production evidence hoặc tự reset credential trong task.
+- Source/local gate có thể xác minh tại repository; Task 6.8 vẫn chờ DNS/TLS thật,
+  production smoke accounts, backup/offsite evidence, rollback drill và 24h review.
+- Không đánh dấu Phase 6 production-ready trước khi toàn bộ external gate 6.3-6.8
+  có bằng chứng và người chịu trách nhiệm phê duyệt.
+
 ## 2026-08-01 - Task 6.7 Load & Performance Test (source/local gate)
 
 - Them `tools/load-test.mjs` bang Node native fetch/FormData, khong them package.
