@@ -1,5 +1,17 @@
 # Workflow Report
 
+## 2026-08-01 - Task 7.2 Online Admissions governance gate
+
+- Audit xác nhận có thể tái sử dụng enrollment transaction patterns và student
+  provisioning sau approval, nhưng không được dùng users làm applicant store.
+- Thêm `docs/online-admissions-governance.md`: workflow, ADM-001-ADM-012,
+  classification, technical gaps, conversion transaction/idempotency contract,
+  forbidden tests và rollout 7.2A-7.2D.
+- Ghi blocker trực tiếp: applicant identity/recovery, CAPTCHA/shared rate limit,
+  malware quarantine/object storage, retention và notification provider.
+- Không tạo migration/API/public form vì các trust/privacy gate chưa được duyệt.
+  Task 7.2 master vẫn chưa hoàn thành.
+
 ## 2026-08-01 - Task 7.1 Student Health & Support governance gate
 
 - Audit xác nhận project có RBAC/audit patterns, private upload và encrypted
